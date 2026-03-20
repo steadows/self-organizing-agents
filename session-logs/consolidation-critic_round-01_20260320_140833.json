@@ -1,0 +1,8 @@
+{
+  "invocation_type": "consolidation-critic",
+  "round": 1,
+  "model": "claude-sonnet-4-6",
+  "input_tokens": 15803,
+  "output_tokens": 2421,
+  "timestamp": "2026-03-20T14:08:33.034035+00:00"
+}

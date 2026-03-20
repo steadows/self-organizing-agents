@@ -1,0 +1,8 @@
+{
+  "invocation_type": "consolidation-synthesizer",
+  "round": 1,
+  "model": "claude-sonnet-4-6",
+  "input_tokens": 9510,
+  "output_tokens": 1344,
+  "timestamp": "2026-03-20T14:10:00.439676+00:00"
+}

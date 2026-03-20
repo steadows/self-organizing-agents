@@ -19,6 +19,9 @@ from pathlib import Path
 from typing import Any
 
 import anthropic
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env.local")
 
 DIMENSIONS = [
     "correctness",

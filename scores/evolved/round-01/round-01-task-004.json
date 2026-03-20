@@ -1,0 +1,34 @@
+{
+  "task_id": "round-01-task-004",
+  "scores": {
+    "correctness": {
+      "score": 10,
+      "justification": "All 15/15 acceptance tests pass. The implementation correctly handles exponential backoff with jitter (random.uniform(0, delay)), max_delay capping, exception filtering, max_retries logic, and functools.wraps preservation. The formula min(base_delay * (2 ** attempt), max_delay) matches the spec exactly."
+    },
+    "edge_cases": {
+      "score": 10,
+      "justification": "All edge cases are handled: max_retries=0 (single call, no sleep), negative max_retries raises ValueError at decoration time, non-matching exceptions propagate immediately without retry, base_delay=0 produces zero sleep durations, max_delay capping from first retry when max_delay < base_delay, and last exception is re-raised after exhausting retries."
+    },
+    "code_quality": {
+      "score": 9,
+      "justification": "Clean, idiomatic Python with full type hints, proper use of functools.wraps, clear variable naming (attempt, last_exception, jittered, delay), and well-structured decorator factory pattern. The BaseException | None union type hint is modern Python 3.10+ syntax. Minor: the type: ignore comment on raise last_exception is a small wart, but acceptable."
+    },
+    "documentation": {
+      "score": 9,
+      "justification": "Comprehensive module-level docstring and detailed function docstring with Args, Returns, and Raises sections. The backoff formula is explicitly documented inline. The only minor gap is no usage example in the docstring (e.g., a code snippet showing decoration), but all parameters and behavior are well-described."
+    },
+    "test_coverage": {
+      "score": 10,
+      "justification": "Exceptional test suite covering: happy path (first call success), retry-then-succeed, exhausted retries, last exception identity, sleep call count, exponential delay computation with exact values, max_delay capping, zero base_delay, non-matching exception propagation, matching exception retry, multiple exception types, max_retries=0 failure and success, negative max_retries validation, and functools.wraps preservation of __name__ and __doc__. All meaningful behaviors are tested with appropriate mocking of time.sleep and random.uniform."
+    },
+    "robustness": {
+      "score": 9,
+      "justification": "Validates max_retries >= 0 at decoration time with a clear ValueError message. Properly handles the case where sleep is not called after the final failed attempt. Exception filtering correctly allows non-matching exceptions to propagate immediately. The only minor gap is no validation of base_delay or max_delay being non-negative, but these are not specified requirements."
+    }
+  },
+  "overall": 9.5,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "15/15 passed",
+  "runs": 3,
+  "aggregation": "median"
+}

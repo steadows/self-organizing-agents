@@ -1,0 +1,34 @@
+{
+  "task_id": "round-01-task-001",
+  "scores": {
+    "correctness": {
+      "score": 10,
+      "justification": "All 20 acceptance tests pass. Handles Unicode transliteration via NFKD, separator customization, max_length truncation with word boundary, empty inputs, and special character stripping correctly."
+    },
+    "edge_cases": {
+      "score": 10,
+      "justification": "All edge cases pass: empty string, whitespace-only, special-chars-only, max_length=0, single long word with no separator (hard truncate), exact fit, trailing separator after truncation, and word boundary truncation all handled correctly."
+    },
+    "code_quality": {
+      "score": 8,
+      "justification": "Clean structure, full type hints, idiomatic Python with re and unicodedata. Minor issue: `escaped_sep = re.escape(separator)` is computed but never used \u2014 dead code. Otherwise excellent naming and readability."
+    },
+    "documentation": {
+      "score": 9,
+      "justification": "Comprehensive module-level docstring and function docstring with Args, Returns sections. Inline comments explain each processing step clearly. Minor gap: no explicit note about the hard-truncate fallback behavior in the docstring."
+    },
+    "test_coverage": {
+      "score": 9,
+      "justification": "17 tests covering happy path, Unicode transliteration, consecutive separators, empty/whitespace/special-char inputs, max_length edge cases (zero, exact fit, word boundary, hard truncate, trailing separator), custom separator, numbers, and mixed content. Very thorough coverage."
+    },
+    "robustness": {
+      "score": 8,
+      "justification": "Handles None-like empty string, max_length=0, and all-non-ASCII inputs gracefully. Returns empty string appropriately. Minor gap: no validation for negative max_length or non-string inputs, and no error raised for invalid separator types."
+    }
+  },
+  "overall": 9,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "20/20 passed",
+  "runs": 3,
+  "aggregation": "median"
+}

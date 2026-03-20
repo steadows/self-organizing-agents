@@ -20,6 +20,9 @@ from pathlib import Path
 from typing import Any
 
 import anthropic
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env.local")
 
 CONSOLIDATION_MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 8192

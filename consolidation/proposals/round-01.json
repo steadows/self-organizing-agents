@@ -1,0 +1,35 @@
+{
+  "summary": {
+    "rules_modified": ["code-quality.md", "task-executor.md"],
+    "net_new_lines": {
+      "code-quality.md": 6,
+      "task-executor.md": 8
+    }
+  },
+  "changes": [
+    {
+      "file": "code-quality.md",
+      "action": "MODIFY",
+      "old_text": "## Documentation\n- Include a docstring on the main function\n- Describe parameters and return values",
+      "new_text": "## Documentation\n- Include a docstring on the main function\n- Describe parameters and return values\n- Include an `Examples:` section showing at least one typical call and its expected return value"
+    },
+    {
+      "file": "code-quality.md",
+      "action": "ADD",
+      "after_line": "- Keep functions reasonably short",
+      "new_text": "- Before finalizing, verify that every assigned variable and every import is actually referenced; remove any that are not"
+    },
+    {
+      "file": "task-executor.md",
+      "action": "ADD",
+      "after_line": "- Handle basic error cases",
+      "new_text": "- For parameters where the task spec explicitly or implicitly constrains valid values (e.g., a count or length that must be non-negative), add a guard at function entry raising `ValueError` with a descriptive message; do not add validation for parameters the spec leaves unconstrained"
+    },
+    {
+      "file": "task-executor.md",
+      "action": "MODIFY",
+      "old_text": "## Testing\n- Write tests using pytest\n- Cover the happy path\n- Include at least one edge case test",
+      "new_text": "## Testing\n- Write tests using pytest\n- Cover the happy path\n- Include at least one edge case test\n- For functions with I/O or external dependencies (file system, network, time), include at least one test that simulates a failure or error path using mocks (e.g., mock an `OSError` or a raised exception from a dependency); do not limit tests to value-space edge cases alone"
+    }
+  ]
+}

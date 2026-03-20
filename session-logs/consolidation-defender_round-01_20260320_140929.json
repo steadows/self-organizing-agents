@@ -1,0 +1,8 @@
+{
+  "invocation_type": "consolidation-defender",
+  "round": 1,
+  "model": "claude-sonnet-4-6",
+  "input_tokens": 6997,
+  "output_tokens": 2294,
+  "timestamp": "2026-03-20T14:09:29.915769+00:00"
+}
