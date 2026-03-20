@@ -405,8 +405,8 @@ Run in a **fresh git worktree** containing only `rules/v2/` + `holdout/` directo
 
 - [x] **3C.9** Compile all evolved scores → `scores/evolved-scores.json` (per-round, per-task, per-dimension)
 - [x] **3C.10** Compile holdout scores → `scores/holdout-scores.json` (pre vs post, per-task, per-dimension, including acceptance test pass rates)
-- [~] **3C.11** Git checkpoint: `data: evolved round 3 + holdout post scores (final)`
-- [ ] **3C.12** **`/steadows-checkpoint`** — snapshot before context reset
+- [x] **3C.11** Git checkpoint: `data: evolved round 3 + holdout post scores (final)`
+- [~] **3C.12** **`/steadows-checkpoint`** — snapshot before context reset
 
 **→ Reset context before Phase 3D.**
 
