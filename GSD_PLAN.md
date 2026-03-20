@@ -379,33 +379,33 @@ Tasks within a round are independent — launch all 5 as concurrent subagents.
 
 ### Round 3 — Final measurement (no consolidation)
 
-- [ ] **3C.1** Launch 5 concurrent subagents (one per task) to execute tasks with rules v2:
+- [x] **3C.1** Launch 5 concurrent subagents (one per task) to execute tasks with rules v2:
   - Subagent 1: task-001 → `outputs/evolved/round-03/task-001/`
   - Subagent 2: task-002 → `outputs/evolved/round-03/task-002/`
   - Subagent 3: task-003 → `outputs/evolved/round-03/task-003/`
   - Subagent 4: task-004 → `outputs/evolved/round-03/task-004/`
   - Subagent 5: task-005 → `outputs/evolved/round-03/task-005/`
-- [ ] **3C.2** Run acceptance tests against all 5 outputs: `pytest tasks/acceptance/ -v`
-- [ ] **3C.3** Judge all 5 outputs via `python scripts/judge.py` (run 3x each, take median). No consolidation — this is the final measurement
+- [x] **3C.2** Run acceptance tests against all 5 outputs: `pytest tasks/acceptance/ -v`
+- [x] **3C.3** Judge all 5 outputs via `python scripts/judge.py` (run 3x each, take median). No consolidation — this is the final measurement
 
 ### Holdout Post-Evaluation (generalization test — isolated worktree)
 
 Run in a **fresh git worktree** containing only `rules/v2/` + `holdout/` directory. No evolution outputs visible. Same artifact flow as Phase 1 holdout.
 
-- [ ] **3C.4** Create isolated worktree for holdout post-evaluation (rules v2 + `holdout/` directory)
-- [ ] **3C.5** Launch 3 concurrent subagents in the worktree to execute holdout tasks with rules v2:
+- [x] **3C.4** Create isolated worktree for holdout post-evaluation (rules v2 + `holdout/` directory)
+- [x] **3C.5** Launch 3 concurrent subagents in the worktree to execute holdout tasks with rules v2:
   - Subagent 1: holdout-001 → `holdout/outputs/post/holdout-001/`
   - Subagent 2: holdout-002 → `holdout/outputs/post/holdout-002/`
   - Subagent 3: holdout-003 → `holdout/outputs/post/holdout-003/`
-- [ ] **3C.6** Run holdout acceptance tests in worktree: `pytest holdout/acceptance/ -v`. Record pass/fail per test case
-- [ ] **3C.7** Judge all 3 holdout outputs in worktree (same 3x median protocol)
-- [ ] **3C.8** Commit holdout post outputs + scores inside worktree. Merge worktree branch to main. Delete worktree
+- [x] **3C.6** Run holdout acceptance tests in worktree: `pytest holdout/acceptance/ -v`. Record pass/fail per test case
+- [x] **3C.7** Judge all 3 holdout outputs in worktree (same 3x median protocol)
+- [x] **3C.8** Commit holdout post outputs + scores inside worktree. Merge worktree branch to main. Delete worktree
 
 ### Compile and Checkpoint
 
-- [ ] **3C.9** Compile all evolved scores → `scores/evolved-scores.json` (per-round, per-task, per-dimension)
-- [ ] **3C.10** Compile holdout scores → `scores/holdout-scores.json` (pre vs post, per-task, per-dimension, including acceptance test pass rates)
-- [ ] **3C.11** Git checkpoint: `data: evolved round 3 + holdout post scores (final)`
+- [x] **3C.9** Compile all evolved scores → `scores/evolved-scores.json` (per-round, per-task, per-dimension)
+- [x] **3C.10** Compile holdout scores → `scores/holdout-scores.json` (pre vs post, per-task, per-dimension, including acceptance test pass rates)
+- [~] **3C.11** Git checkpoint: `data: evolved round 3 + holdout post scores (final)`
 - [ ] **3C.12** **`/steadows-checkpoint`** — snapshot before context reset
 
 **→ Reset context before Phase 3D.**

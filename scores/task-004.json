@@ -3,30 +3,30 @@
   "scores": {
     "correctness": {
       "score": 10,
-      "justification": "All 15/15 acceptance tests pass. The implementation correctly handles exponential backoff with jitter (random.uniform(0, delay)), max_retries enforcement, exception filtering, and proper re-raising of the last exception. The formula min(base_delay * (2 ** attempt), max_delay) matches the spec exactly."
+      "justification": "All 15/15 acceptance tests pass. The implementation correctly handles exponential backoff with jitter (random.uniform(0, delay)), max_retries+1 total calls, exception filtering, and re-raising the last exception. The formula min(base_delay * (2**attempt), max_delay) matches the spec exactly."
     },
     "edge_cases": {
       "score": 10,
-      "justification": "All edge cases are handled: max_retries=0 (both success and failure), negative max_retries raises ValueError at decoration time, non-matching exceptions propagate immediately without retry, base_delay=0 produces zero sleep, max_delay less than base_delay caps from attempt 0, and mixed exception types mid-sequence are handled correctly."
+      "justification": "All edge cases are handled: max_retries=0 (no sleep, single call), negative max_retries raises ValueError at decoration time, base_delay=0 produces zero sleeps, max_delay less than base_delay caps from first retry, non-matching exceptions propagate immediately without retry, and functools.wraps preserves metadata including __wrapped__."
     },
     "code_quality": {
-      "score": 9,
-      "justification": "Clean, idiomatic Python with full type hints on the decorator factory parameters. Uses functools.wraps correctly, meaningful variable names (last_exception, attempt, sleep_time), and a clear three-level structure (factory \u2192 decorator \u2192 wrapper). Minor note: the exceptions parameter type hint uses bare tuple rather than tuple[type[Exception], ...] but this is a minor style point."
+      "score": 10,
+      "justification": "Excellent code quality: full type hints including TypeVar T, proper use of functools.wraps, clean three-level decorator structure (factory\u2192decorator\u2192wrapper), meaningful constants for defaults, idiomatic Python throughout. The assert last_exc is not None is a clean way to satisfy the type checker. Naming is clear and consistent."
     },
     "documentation": {
-      "score": 9,
-      "justification": "Comprehensive NumPy-style docstring with Parameters, Returns, Raises, and Examples sections. The delay formula is explicitly documented inline. The docstring clearly explains the total call count (max_retries + 1), jitter behavior, and immediate propagation for non-listed exceptions. The example is runnable and correct."
+      "score": 10,
+      "justification": "Comprehensive module-level docstring, detailed decorator factory docstring with Parameters, Returns, Raises, and Examples sections using NumPy-style formatting. Inner functions also have docstrings. The algorithm description (delay formula, jitter range, total call count) is clearly documented."
     },
     "test_coverage": {
       "score": 10,
-      "justification": "Exceptionally thorough test suite with 20 tests covering: happy path (success on first call, correct return values), retry mechanics (exact call counts, last exception re-raised), boundary conditions (max_retries=0 success/failure, negative max_retries), exception filtering (non-matching, matching, mixed), delay mechanics (sleep call count, no sleep on success, exponential growth, max_delay cap, base_delay=0), metadata preservation (name, docstring), and realistic I/O simulation scenarios."
+      "justification": "Exceptional test suite covering: happy path (first call success, no sleep), retry-then-succeed, sleep call count verification, exponential backoff delay computation with exact values, max_delay capping, exception re-raise after exhaustion, total call count, non-matching exception propagation, matching exception retry, max_retries=0 both success and failure, negative max_retries ValueError, base_delay=0, max_delay < base_delay, and functools.wraps metadata preservation (__name__, __doc__, __wrapped__). 17 tests total with meaningful assertions."
     },
     "robustness": {
       "score": 9,
-      "justification": "Validates max_retries >= 0 at decoration time with a clear ValueError message. Properly handles the case where last_exception could theoretically be None (though logically impossible given the loop structure). Exception filtering uses Python's native except clause with the exceptions tuple, which is correct and safe. Minor gap: no validation of base_delay or max_delay being non-negative, but these are not specified requirements."
+      "justification": "Validates max_retries >= 0 with a clear ValueError. Handles all failure modes gracefully. The only minor gap is no validation of base_delay or max_delay being non-negative, though these are less critical since negative values would just result in unusual but not crashing behavior. The assert statement for last_exc is a reasonable internal invariant check."
     }
   },
-  "overall": 9.5,
+  "overall": 9.8,
   "acceptance_test_pass": true,
   "acceptance_test_details": "15/15 passed",
   "runs": 3,

@@ -3,30 +3,30 @@
   "scores": {
     "correctness": {
       "score": 10,
-      "justification": "All 16 acceptance tests pass. Every specified requirement is implemented: LRU eviction, TTL expiration, cache_info(), cache_clear(), functools.wraps metadata preservation, maxsize=0 and ttl=0 disabling caching, and thread safety."
+      "justification": "All 16/16 acceptance tests pass. The implementation correctly handles caching with LRU eviction, TTL expiration, cache_info(), cache_clear(), disabled caching (maxsize=0, ttl=0), kwargs order independence, and metadata preservation via functools.wraps."
     },
     "edge_cases": {
       "score": 10,
-      "justification": "All edge cases handled: unhashable args raise TypeError, negative TTL/maxsize raise ValueError with correct messages, ttl=0 and maxsize=0 both disable caching, expired entries become misses, exceptions from wrapped functions don't get cached (currsize stays 0), None return values are cached correctly, no-args functions work."
+      "justification": "All edge cases are handled: negative maxsize/ttl raise ValueError, unhashable args raise TypeError, maxsize=0 and ttl=0 both disable caching, None return values are cached, no-arg functions work, TTL expiry is correctly detected using time.monotonic, and concurrent access is thread-safe."
     },
     "code_quality": {
       "score": 9,
-      "justification": "Excellent structure with full type hints, proper use of OrderedDict for O(1) LRU operations, threading.Lock, sentinel pattern, nonlocal counters, and functools.wraps. Lock is released during function execution to avoid holding it during slow I/O \u2014 a thoughtful design choice. Minor: the explicit hash(key) check is slightly redundant but harmless."
+      "justification": "Excellent code quality: full type hints throughout, clean separation of concerns (_make_key helper), idiomatic use of OrderedDict for LRU, proper use of nonlocal, TypeVar for generic typing, and clear naming conventions. Minor note: the double-lock pattern (releasing lock before calling func, then re-acquiring) is intentional to avoid holding the lock during potentially slow function calls, which is a good design choice but could allow duplicate computation under contention."
     },
     "documentation": {
-      "score": 9,
-      "justification": "Comprehensive NumPy-style docstring on ttl_cache with Parameters, Returns, Raises, and Examples sections. cache_info() and cache_clear() have docstrings. Meaningful inline comments explain design decisions (e.g., calling outside lock). Module-level docstring present. Only minor gap: wrapper() itself lacks a docstring."
+      "score": 10,
+      "justification": "Comprehensive docstrings throughout: the module-level docstring, ttl_cache() has full parameter descriptions, return value documentation, raises section, and working examples. The decorator() and wrapper() functions have brief but appropriate docstrings. cache_info() and cache_clear() have clear docstrings. _make_key() documents its behavior and raises clause. Inline comments explain non-obvious logic like the LRU move and expiry handling."
     },
     "test_coverage": {
       "score": 10,
-      "justification": "Exceptionally thorough test suite covering: basic miss/hit, multiple distinct args, kwargs, no-args functions, None return values, TTL expiration via monotonic mock, within-TTL hits, ttl=0, maxsize=0, LRU eviction order, cache_clear reset, unhashable args/kwargs, negative parameter validation, metadata preservation, concurrent thread safety, exception propagation, and exception not incrementing hits."
+      "justification": "The test suite is thorough and well-organized: happy path (basic hit/miss, different args, kwargs order, None returns, no-args), TTL expiration (both expired and within TTL), LRU eviction, disabled caching (maxsize=0 and ttl=0 separately), cache_clear, error cases (negative maxsize, negative ttl, unhashable args and kwargs), metadata preservation, thread safety, and a sophisticated mock of time.monotonic to verify expiry logic. All meaningful behaviors are tested."
     },
     "robustness": {
       "score": 9,
-      "justification": "Validates negative TTL and maxsize with clear ValueError messages. Raises TypeError for unhashable arguments. Exceptions from the wrapped function don't pollute the cache. Lock is released during the actual function call to avoid holding it during slow I/O. Thread-safe throughout. Minor: no validation that maxsize is an integer type, but this is a minor concern."
+      "justification": "Input validation is performed eagerly at decoration time for maxsize and ttl. Unhashable arguments raise TypeError via hash(key) in _make_key. Thread safety is ensured with a lock. The double-lock pattern prevents holding the lock during function execution. One minor concern: the double-lock pattern means two threads could both compute the same key simultaneously (the second write overwrites the first), but this is a reasonable trade-off and doesn't cause incorrect behavior."
     }
   },
-  "overall": 9.5,
+  "overall": 9.7,
   "acceptance_test_pass": true,
   "acceptance_test_details": "16/16 passed",
   "runs": 3,

@@ -1,0 +1,138 @@
+{
+  "round-01": {
+    "rules_version": "v0",
+    "tasks": {
+      "task-001": {
+        "overall": 9.0,
+        "acceptance_pass": true
+      },
+      "task-002": {
+        "overall": 9.3,
+        "acceptance_pass": true
+      },
+      "task-003": {
+        "overall": 9.3,
+        "acceptance_pass": true
+      },
+      "task-004": {
+        "overall": 9.5,
+        "acceptance_pass": true
+      },
+      "task-005": {
+        "overall": 9.5,
+        "acceptance_pass": true
+      }
+    },
+    "overall_average": 9.32,
+    "acceptance_pass_rate": "5/5"
+  },
+  "round-02": {
+    "rules_version": "v1",
+    "tasks": {
+      "task-001": {
+        "overall": 9.7,
+        "acceptance_pass": true
+      },
+      "task-002": {
+        "overall": 9.3,
+        "acceptance_pass": true
+      },
+      "task-003": {
+        "overall": 9.8,
+        "acceptance_pass": true
+      },
+      "task-004": {
+        "overall": 9.5,
+        "acceptance_pass": true
+      },
+      "task-005": {
+        "overall": 9.5,
+        "acceptance_pass": true
+      }
+    },
+    "overall_average": 9.56,
+    "acceptance_pass_rate": "5/5"
+  },
+  "round-03": {
+    "rules_version": "v2",
+    "tasks": {
+      "task-001": {
+        "overall": 9.3,
+        "acceptance_pass": true,
+        "dimensions": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "code_quality": 9,
+          "documentation": 10,
+          "test_coverage": 9,
+          "robustness": 8
+        }
+      },
+      "task-002": {
+        "overall": 9.3,
+        "acceptance_pass": true,
+        "dimensions": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "code_quality": 9,
+          "documentation": 9,
+          "test_coverage": 9,
+          "robustness": 9
+        }
+      },
+      "task-003": {
+        "overall": 9.8,
+        "acceptance_pass": true,
+        "dimensions": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "code_quality": 9,
+          "documentation": 10,
+          "test_coverage": 10,
+          "robustness": 10
+        }
+      },
+      "task-004": {
+        "overall": 9.8,
+        "acceptance_pass": true,
+        "dimensions": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "code_quality": 10,
+          "documentation": 10,
+          "test_coverage": 10,
+          "robustness": 9
+        }
+      },
+      "task-005": {
+        "overall": 9.7,
+        "acceptance_pass": true,
+        "dimensions": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "code_quality": 9,
+          "documentation": 10,
+          "test_coverage": 10,
+          "robustness": 9
+        }
+      }
+    },
+    "overall_average": 9.58,
+    "acceptance_pass_rate": "5/5",
+    "dimension_averages": {
+      "correctness": 10.0,
+      "edge_cases": 10.0,
+      "code_quality": 9.2,
+      "documentation": 9.8,
+      "test_coverage": 9.6,
+      "robustness": 9.0
+    }
+  },
+  "summary": {
+    "baseline_mean": 8.0,
+    "round_01_mean": 9.32,
+    "round_02_mean": 9.56,
+    "round_03_mean": 9.58,
+    "total_gain_vs_baseline": 1.58
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "model": "claude-sonnet-4-6",
+  "task_id": "holdout-002",
+  "input_tokens": 9048,
+  "output_tokens": 1615,
+  "estimated_cost_usd": 0.0514,
+  "timestamp": "2026-03-20T14:51:13.448831+00:00",
+  "runs": 3
+}

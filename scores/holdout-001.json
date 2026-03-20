@@ -1,0 +1,34 @@
+{
+  "task_id": "holdout-001",
+  "scores": {
+    "correctness": {
+      "score": 10,
+      "justification": "All 21 acceptance tests pass. The implementation correctly parses all valid duration formats, handles case insensitivity, any-order units, and returns accurate integer seconds for all cases."
+    },
+    "edge_cases": {
+      "score": 10,
+      "justification": "All edge cases handled: empty string, duplicate units (including mixed-case '1H1h'), negative values (rejected by regex), decimals, unsupported units, spaces, ISO 8601 format, digits-only strings, and non-numeric prefixes. The whitelist regex approach elegantly catches most invalid inputs."
+    },
+    "code_quality": {
+      "score": 10,
+      "justification": "Excellent structure: module-level compiled regex constants (UNIT_SECONDS, VALID_PATTERN, TOKEN_PATTERN), full type hints including modern `set[str]`, clean variable naming, idiomatic Python. Two-stage validation approach is clean and efficient. No unnecessary complexity."
+    },
+    "documentation": {
+      "score": 10,
+      "justification": "Comprehensive NumPy-style docstring with Parameters, Returns, Raises (listing all error conditions), and Examples sections with doctestable examples. Module-level docstring present. Inline comments not needed given the clarity of the code."
+    },
+    "test_coverage": {
+      "score": 10,
+      "justification": "Exceptionally thorough: 12 happy-path tests (full HMS, individual units, zero values, case variants, reversed order, large values), 2 boundary tests, and 11 error-path tests covering every documented ValueError condition. The mixed-case duplicate test ('1H1h') shows attention to subtle interactions."
+    },
+    "robustness": {
+      "score": 10,
+      "justification": "Whitelist regex validation rejects all invalid inputs before processing. Explicit duplicate unit tracking with normalization. All ValueError messages include the offending input via repr(). No path through the code can silently produce wrong results. Graceful handling of all documented failure modes."
+    }
+  },
+  "overall": 10,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "21/21 passed",
+  "runs": 3,
+  "aggregation": "median"
+}

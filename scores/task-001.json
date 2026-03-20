@@ -3,30 +3,30 @@
   "scores": {
     "correctness": {
       "score": 10,
-      "justification": "All 20/20 acceptance tests pass. Every specified requirement is met: Unicode transliteration via NFKD, lowercasing, separator collapsing, leading/trailing separator stripping, max_length truncation with word-boundary preference, and empty string returns."
+      "justification": "All 20/20 acceptance tests pass. Every specified requirement is implemented correctly: Unicode transliteration via NFKD, lowercasing, separator collapsing, leading/trailing separator stripping, max_length truncation at word boundaries, and empty string returns."
     },
     "edge_cases": {
       "score": 10,
-      "justification": "All edge cases handled: empty string, whitespace-only, all-special-characters, CJK (non-transliterable) input, max_length=0, max_length=-1 (ValueError), truncation landing on separator, hard truncation when no separator exists, and exact-fit max_length. All 20 acceptance tests pass."
+      "justification": "All edge cases pass: empty string returns '', only special chars returns '', max_length=0 returns '', negative max_length raises ValueError with clear message, hard truncation when no separator boundary exists, no trailing separator after truncation, max_length equal to or larger than slug length handled correctly."
     },
     "code_quality": {
       "score": 9,
-      "justification": "Full type hints, clean variable naming (normalized, ascii_bytes, lowered, slug), logical step-by-step structure with inline comments explaining each transformation. Idiomatic use of re.sub and unicodedata. Minor: could use a compiled regex constant for repeated use, but given the function's simplicity this is negligible."
+      "justification": "Full type hints throughout, clean variable naming (normalized, ascii_bytes, lowered, slug), good separation with private _truncate_at_boundary helper, idiomatic use of unicodedata and re.sub. Minor gap: separator parameter is not validated (e.g., alphanumeric separator would silently break the regex logic)."
     },
     "documentation": {
       "score": 10,
-      "justification": "Comprehensive NumPy-style docstring with Parameters, Returns, and Examples sections. Edge case behavior explicitly documented (empty string return conditions, max_length=0 behavior). Module-level docstring present. Inline comments explain each processing step clearly."
+      "justification": "Comprehensive NumPy-style docstrings on both functions with Parameters, Returns, Raises, and Examples sections. Examples are accurate and cover the main use cases. Edge case behavior (empty return, ValueError) is explicitly documented. The private helper is also fully documented."
     },
     "test_coverage": {
-      "score": 10,
-      "justification": "25 tests covering happy path (basic ASCII, Unicode umlauts, Spanish/German characters, numbers, custom separator), edge cases (empty, whitespace, special chars, CJK), max_length scenarios (zero, exact fit, one-less, word boundary, hard truncation, negative), and separator behavior (consecutive separators, no leading/trailing). Tests include explanatory comments and meaningful assertions."
+      "score": 9,
+      "justification": "24 tests covering happy path, Unicode transliteration, custom separator, consecutive non-alphanumeric collapse, all edge cases (empty, whitespace, special chars), boundary conditions (max_length=0, negative, equal, larger), error paths, and mixed input. The flexible word-boundary truncation test is well-reasoned. Minor gap: no test for alphanumeric or multi-character separator behavior."
     },
     "robustness": {
-      "score": 9,
-      "justification": "Validates max_length with clear ValueError message for negative values. Gracefully returns empty string for all non-slug-producing inputs. Truncation logic correctly handles separator-at-boundary edge case. Minor gap: no explicit type validation for non-string inputs (would raise AttributeError rather than a clear error), but this is standard Python practice."
+      "score": 8,
+      "justification": "Validates max_length with a clear ValueError. Handles empty strings and all-non-ASCII input gracefully. Returns empty string rather than crashing in degenerate cases. Minor gaps: separator is not validated (alphanumeric separator would silently produce incorrect results), and text type is not validated, though this is typical for Python duck-typing conventions."
     }
   },
-  "overall": 9.7,
+  "overall": 9.3,
   "acceptance_test_pass": true,
   "acceptance_test_details": "20/20 passed",
   "runs": 3,
