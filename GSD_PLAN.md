@@ -312,6 +312,7 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
 **Goal:** Run the same 5 tasks with consolidation active. Rules evolve after each **batch** of 5 tasks, not after each individual task. Run 3 rounds to give the consolidation loop enough signal to converge.
 **Estimated effort:** 3-4 hours
 **Dependency:** Phase 1 + Phase 2 complete
+**Status:** 🔵 IN PROGRESS
 
 **Why batch consolidation:** Consolidating after a single task gives the critic one data point — not enough to distinguish a rule gap from a task-specific quirk. Batch consolidation gives 5 diverse outputs per round, producing higher-quality rule updates with less noise.
 
