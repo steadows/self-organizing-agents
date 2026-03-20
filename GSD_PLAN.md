@@ -341,8 +341,8 @@ Tasks within a round are independent — launch all 5 as concurrent subagents.
 - [x] **3A.4** Run consolidation: `python scripts/consolidate.py --round 01` → critic/defender/synthesizer review ALL 5 outputs + scores + acceptance results → proposal written to `consolidation/proposals/round-01.md`, debate to `consolidation/debates/round-01.md`
 - [x] **3A.5** 🔒 **Human approval gate:** Review `consolidation/proposals/round-01.md` against `consolidation/approval-rubric.md` → record decision + rationale in `consolidation/approvals/round-01.md`
 - [x] **3A.6** If approved: `python scripts/apply_rules.py --proposal consolidation/proposals/round-01.md` → creates `rules/v1/`, updates `rules/current` symlink
-- [~] **3A.7** Git checkpoint: `data: evolved round 1 scores + rules v1`
-- [ ] **3A.8** **`/steadows-checkpoint`** — snapshot before context reset
+- [x] **3A.7** Git checkpoint: `data: evolved round 1 scores + rules v1`
+- [x] **3A.8** **`/steadows-checkpoint`** — snapshot before context reset
 
 **→ Reset context before Phase 3B.**
 
