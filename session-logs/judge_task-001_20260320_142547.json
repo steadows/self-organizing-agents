@@ -1,0 +1,9 @@
+{
+  "model": "claude-sonnet-4-6",
+  "task_id": "task-001",
+  "input_tokens": 9327,
+  "output_tokens": 3153,
+  "estimated_cost_usd": 0.0753,
+  "timestamp": "2026-03-20T14:25:47.169295+00:00",
+  "runs": 3
+}

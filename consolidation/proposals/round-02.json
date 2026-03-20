@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "rules_modified": ["code-quality.md"],
+    "net_new_lines": {
+      "code-quality.md": 2
+    }
+  },
+  "changes": [
+    {
+      "file": "code-quality.md",
+      "action": "MODIFY",
+      "old_text": "## Documentation\n- Include a docstring on the main function\n- Describe parameters and return values\n- Include an `Examples:` section showing at least one typical call and its expected return value",
+      "new_text": "## Documentation\n- Include a docstring on the main function\n- Describe parameters and return values\n- Include an `Examples:` section showing at least one typical call and its expected return value\n- Private helper functions should include at minimum a one-line summary docstring; for helpers with multiple parameters or non-obvious behavior, also document parameters and return values concisely"
+    },
+    {
+      "file": "code-quality.md",
+      "action": "MODIFY",
+      "old_text": "## Type Hints\n- Add type hints to function signatures\n- Use standard library types where possible",
+      "new_text": "## Type Hints\n- Add type hints to function signatures\n- Use standard library types where possible\n- Prefer specific generic forms over bare container types: use `tuple[type[Exception], ...]` rather than bare `tuple`, and annotate `Callable` with parameter and return types (`Callable[..., T]` or a concrete signature) when the signature is known"
+    }
+  ]
+}

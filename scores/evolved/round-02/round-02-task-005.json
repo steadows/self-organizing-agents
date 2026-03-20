@@ -1,0 +1,34 @@
+{
+  "task_id": "task-005",
+  "scores": {
+    "correctness": {
+      "score": 10,
+      "justification": "All 16 acceptance tests pass. Every specified requirement is implemented: LRU eviction, TTL expiration, cache_info(), cache_clear(), functools.wraps metadata preservation, maxsize=0 and ttl=0 disabling caching, and thread safety."
+    },
+    "edge_cases": {
+      "score": 10,
+      "justification": "All edge cases handled: unhashable args raise TypeError, negative TTL/maxsize raise ValueError with correct messages, ttl=0 and maxsize=0 both disable caching, expired entries become misses, exceptions from wrapped functions don't get cached (currsize stays 0), None return values are cached correctly, no-args functions work."
+    },
+    "code_quality": {
+      "score": 9,
+      "justification": "Excellent structure with full type hints, proper use of OrderedDict for O(1) LRU operations, threading.Lock, sentinel pattern, nonlocal counters, and functools.wraps. Lock is released during function execution to avoid holding it during slow I/O \u2014 a thoughtful design choice. Minor: the explicit hash(key) check is slightly redundant but harmless."
+    },
+    "documentation": {
+      "score": 9,
+      "justification": "Comprehensive NumPy-style docstring on ttl_cache with Parameters, Returns, Raises, and Examples sections. cache_info() and cache_clear() have docstrings. Meaningful inline comments explain design decisions (e.g., calling outside lock). Module-level docstring present. Only minor gap: wrapper() itself lacks a docstring."
+    },
+    "test_coverage": {
+      "score": 10,
+      "justification": "Exceptionally thorough test suite covering: basic miss/hit, multiple distinct args, kwargs, no-args functions, None return values, TTL expiration via monotonic mock, within-TTL hits, ttl=0, maxsize=0, LRU eviction order, cache_clear reset, unhashable args/kwargs, negative parameter validation, metadata preservation, concurrent thread safety, exception propagation, and exception not incrementing hits."
+    },
+    "robustness": {
+      "score": 9,
+      "justification": "Validates negative TTL and maxsize with clear ValueError messages. Raises TypeError for unhashable arguments. Exceptions from the wrapped function don't pollute the cache. Lock is released during the actual function call to avoid holding it during slow I/O. Thread-safe throughout. Minor: no validation that maxsize is an integer type, but this is a minor concern."
+    }
+  },
+  "overall": 9.5,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "16/16 passed",
+  "runs": 3,
+  "aggregation": "median"
+}
