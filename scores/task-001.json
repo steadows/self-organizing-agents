@@ -1,0 +1,34 @@
+{
+  "task_id": "task-001",
+  "scores": {
+    "correctness": {
+      "score": 10,
+      "justification": "All 20/20 acceptance tests pass. Every specified requirement is met: Unicode transliteration via NFKD, lowercasing, separator collapsing, leading/trailing separator stripping, max_length truncation with word-boundary preference, and empty string returns."
+    },
+    "edge_cases": {
+      "score": 10,
+      "justification": "All edge cases handled: empty string, whitespace-only, all-special-characters, CJK (non-transliterable) input, max_length=0, max_length=-1 (ValueError), truncation landing on separator, hard truncation when no separator exists, and exact-fit max_length. All 20 acceptance tests pass."
+    },
+    "code_quality": {
+      "score": 9,
+      "justification": "Full type hints, clean variable naming (normalized, ascii_bytes, lowered, slug), logical step-by-step structure with inline comments explaining each transformation. Idiomatic use of re.sub and unicodedata. Minor: could use a compiled regex constant for repeated use, but given the function's simplicity this is negligible."
+    },
+    "documentation": {
+      "score": 10,
+      "justification": "Comprehensive NumPy-style docstring with Parameters, Returns, and Examples sections. Edge case behavior explicitly documented (empty string return conditions, max_length=0 behavior). Module-level docstring present. Inline comments explain each processing step clearly."
+    },
+    "test_coverage": {
+      "score": 10,
+      "justification": "25 tests covering happy path (basic ASCII, Unicode umlauts, Spanish/German characters, numbers, custom separator), edge cases (empty, whitespace, special chars, CJK), max_length scenarios (zero, exact fit, one-less, word boundary, hard truncation, negative), and separator behavior (consecutive separators, no leading/trailing). Tests include explanatory comments and meaningful assertions."
+    },
+    "robustness": {
+      "score": 9,
+      "justification": "Validates max_length with clear ValueError message for negative values. Gracefully returns empty string for all non-slug-producing inputs. Truncation logic correctly handles separator-at-boundary edge case. Minor gap: no explicit type validation for non-string inputs (would raise AttributeError rather than a clear error), but this is standard Python practice."
+    }
+  },
+  "overall": 9.7,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "20/20 passed",
+  "runs": 3,
+  "aggregation": "median"
+}
