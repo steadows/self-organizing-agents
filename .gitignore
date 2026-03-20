@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.context/
+.claude/
+
+# Axon index (regenerable)
+.axon/
+
+# Pytest cache
+.pytest_cache/
+
+# Session logs may contain sensitive data - track selectively
+# session-logs/ are tracked for reproducibility per GSD plan

@@ -1,0 +1,12 @@
+{
+  "model": "claude-sonnet-4-6",
+  "temperature": 0.0,
+  "max_tokens": 4096,
+  "rubric_hash": "d1cb54b7e9e2ab73a54b9f21f42f96a64c9de40df3dff932bd7f3c2bc45412e0",
+  "prompt_hash": "628b9d2389c6dd5cca80239e6ad4cffdc4c15c3ee9cb5fabb9e7ac68b378a418",
+  "rubric_file": "scores/judge-rubric.md",
+  "frozen": true,
+  "frozen_date": "2026-03-20",
+  "runs_per_output": 3,
+  "aggregation": "median"
+}
