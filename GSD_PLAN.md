@@ -259,7 +259,7 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
 **Goal:** Build the critic/defender/synthesizer debate pattern.
 **Estimated effort:** 2-3 hours
 **Dependency:** Phase 0 complete (can run in parallel with Phase 1)
-**Status:** 🔵 IN PROGRESS
+**Status:** ✅ COMPLETE (2026-03-20)
 
 ### 2A: Agent Design
 
@@ -302,8 +302,8 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
   - Commits: `chore: evolve rules round-N`
 
 - [x] **2.8** End-to-end test of consolidation loop using one baseline output
-- [~] **2.9** Git checkpoint: `feat: consolidation loop (critic/defender/synthesizer)`
-- [ ] **2.10** **`/steadows-verify`** — Phase 2 quality gate. Verify: all 3 agent prompts exist and are well-formed, consolidate.py passes all tests, apply_rules.py passes all tests, end-to-end test produces valid proposal + debate transcript, symlink management works correctly, no files written outside sandbox
+- [x] **2.9** Git checkpoint: `feat: consolidation loop (critic/defender/synthesizer)`
+- [x] **2.10** **`/steadows-verify`** — Phase 2 quality gate. Verify: all 3 agent prompts exist and are well-formed, consolidate.py passes all tests, apply_rules.py passes all tests, end-to-end test produces valid proposal + debate transcript, symlink management works correctly, no files written outside sandbox
 
 ---
 

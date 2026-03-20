@@ -279,8 +279,8 @@ def log_session(log_dir: Path, metadata: dict[str, Any]) -> Path:
     round_num = metadata.get("round", 0)
     log_file = log_dir / f"{invocation_type}_round-{round_num:02d}_{timestamp}.json"
 
-    metadata["timestamp"] = datetime.now(timezone.utc).isoformat()
-    log_file.write_text(json.dumps(metadata, indent=2))
+    entry = {**metadata, "timestamp": datetime.now(timezone.utc).isoformat()}
+    log_file.write_text(json.dumps(entry, indent=2))
     return log_file
 
 

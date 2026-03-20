@@ -147,7 +147,9 @@ def apply_proposal(version_dir: Path, proposal: dict[str, Any]) -> None:
         proposal: Parsed proposal dict with 'changes' list.
     """
     for change in proposal["changes"]:
-        file_path = version_dir / change["file"]
+        file_path = (version_dir / change["file"]).resolve()
+        if not str(file_path).startswith(str(version_dir.resolve())):
+            raise ValueError(f"Path traversal detected: {change['file']}")
         content = file_path.read_text()
 
         if change["action"] == "ADD":
@@ -235,7 +237,7 @@ def apply_rules(
             "files_modified": files_modified,
         }
 
-    except (ValueError, Exception):
+    except (ValueError, FileNotFoundError, OSError):
         # Rollback: remove the new version directory
         if new_dir.exists():
             shutil.rmtree(new_dir)
