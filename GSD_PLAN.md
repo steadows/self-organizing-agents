@@ -310,7 +310,7 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
 ## Phase 3: Evolved Iterations (Batch Consolidation)
 
 **Goal:** Run the same 5 tasks with consolidation active. Rules evolve after each **batch** of 5 tasks, not after each individual task. Run 3 rounds to give the consolidation loop enough signal to converge.
-**Estimated effort:** 3-4 hours
+**Estimated effort:** 3-4 hours total across 4 sessions
 **Dependency:** Phase 1 + Phase 2 complete
 **Status:** 🔵 IN PROGRESS
 
@@ -318,60 +318,106 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
 
 **Session logging:** Every task run must log session metadata to `session-logs/` (model version, session ID, timestamp, token counts).
 
-### Round 1: Execute all 5 tasks with rules v0
+**Context management:** Phase 3 is split into 4 sub-phases, each designed to fit in a single context window. Start each sub-phase in a **fresh session**. Load context from the latest snapshot in `.context/snapshots/`. **All task execution MUST use subagents (Agent tool)** — never run tasks directly in the main session. This keeps task outputs out of the orchestrating context window and prevents compaction.
 
-Tasks within a round are independent — run concurrently in separate sessions.
+---
 
-- [ ] **3.1** Run task-001 with current rules (v0) → `outputs/evolved/round-01/task-001/`
-- [ ] **3.2** Run task-002 with current rules (v0) → `outputs/evolved/round-01/task-002/`
-- [ ] **3.3** Run task-003 with current rules (v0) → `outputs/evolved/round-01/task-003/`
-- [ ] **3.4** Run task-004 with current rules (v0) → `outputs/evolved/round-01/task-004/`
-- [ ] **3.5** Run task-005 with current rules (v0) → `outputs/evolved/round-01/task-005/`
-- [ ] **3.6** Run acceptance tests against all 5 outputs
-- [ ] **3.7** Judge all 5 outputs (run 3x each, take median). Cross-check against acceptance test results
-- [ ] **3.8** Consolidation round 1: critic/defender/synthesizer review ALL 5 outputs + scores + acceptance test results → proposal to `consolidation/proposals/round-01.md` → human reviews against `approval-rubric.md` → decision + rationale recorded in `consolidation/approvals/round-01.md` → if approved, apply via `apply_rules.py` → creates `rules/v1/`
-- [ ] **3.9** Git checkpoint: `data: evolved round 1 scores + rules v1`
+## Phase 3A: Round 1 — Execute + Consolidate (rules v0 → v1)
 
-### Round 2: Execute all 5 tasks with rules v1
+**Start:** Fresh session. Load `.context/snapshots/` (latest) + `GSD_PLAN.md` Phase 3A section + `rules/v0/*.md` + `scores/baseline-scores.json`.
+**End:** `rules/v1/` created, checkpoint taken, context reset.
 
-- [ ] **3.10** Run task-001 with evolved rules (v1) → `outputs/evolved/round-02/task-001/`
-- [ ] **3.11** Run task-002 with evolved rules (v1) → `outputs/evolved/round-02/task-002/`
-- [ ] **3.12** Run task-003 with evolved rules (v1) → `outputs/evolved/round-02/task-003/`
-- [ ] **3.13** Run task-004 with evolved rules (v1) → `outputs/evolved/round-02/task-004/`
-- [ ] **3.14** Run task-005 with evolved rules (v1) → `outputs/evolved/round-02/task-005/`
-- [ ] **3.15** Run acceptance tests against all 5 outputs
-- [ ] **3.16** Judge all 5 outputs. Cross-check against acceptance test results
-- [ ] **3.17** Consolidation round 2: review ALL 5 outputs + scores + diff from round 1 → human approval (same protocol) → apply → creates `rules/v2/`
-- [ ] **3.18** Git checkpoint: `data: evolved round 2 scores + rules v2`
+Tasks within a round are independent — launch all 5 as concurrent subagents.
 
-### Round 3: Execute all 5 tasks with rules v2 (final measurement)
+- [ ] **3A.1** Launch 5 concurrent subagents (one per task) to execute tasks with rules v0:
+  - Subagent 1: task-001 → `outputs/evolved/round-01/task-001/`
+  - Subagent 2: task-002 → `outputs/evolved/round-01/task-002/`
+  - Subagent 3: task-003 → `outputs/evolved/round-01/task-003/`
+  - Subagent 4: task-004 → `outputs/evolved/round-01/task-004/`
+  - Subagent 5: task-005 → `outputs/evolved/round-01/task-005/`
+  - Each subagent reads `tasks/task-00N.md` + `rules/current/*.md` and writes output to its designated directory
+- [ ] **3A.2** Run acceptance tests against all 5 outputs: `pytest tasks/acceptance/ -v`
+- [ ] **3A.3** Judge all 5 outputs via `python scripts/judge.py` (run 3x each, take median). Cross-check against acceptance test results
+- [ ] **3A.4** Run consolidation: `python scripts/consolidate.py --round 01` → critic/defender/synthesizer review ALL 5 outputs + scores + acceptance results → proposal written to `consolidation/proposals/round-01.md`, debate to `consolidation/debates/round-01.md`
+- [ ] **3A.5** 🔒 **Human approval gate:** Review `consolidation/proposals/round-01.md` against `consolidation/approval-rubric.md` → record decision + rationale in `consolidation/approvals/round-01.md`
+- [ ] **3A.6** If approved: `python scripts/apply_rules.py --proposal consolidation/proposals/round-01.md` → creates `rules/v1/`, updates `rules/current` symlink
+- [ ] **3A.7** Git checkpoint: `data: evolved round 1 scores + rules v1`
+- [ ] **3A.8** **`/steadows-checkpoint`** — snapshot before context reset
 
-- [ ] **3.19** Run task-001 with evolved rules (v2) → `outputs/evolved/round-03/task-001/`
-- [ ] **3.20** Run task-002 with evolved rules (v2) → `outputs/evolved/round-03/task-002/`
-- [ ] **3.21** Run task-003 with evolved rules (v2) → `outputs/evolved/round-03/task-003/`
-- [ ] **3.22** Run task-004 with evolved rules (v2) → `outputs/evolved/round-03/task-004/`
-- [ ] **3.23** Run task-005 with evolved rules (v2) → `outputs/evolved/round-03/task-005/`
-- [ ] **3.24** Run acceptance tests against all 5 outputs
-- [ ] **3.25** Judge all 5 outputs (no consolidation — this is the final measurement)
+**→ Reset context before Phase 3B.**
+
+---
+
+## Phase 3B: Round 2 — Execute + Consolidate (rules v1 → v2)
+
+**Start:** Fresh session. Load `.context/snapshots/` (latest) + `GSD_PLAN.md` Phase 3B section + `rules/v1/*.md` + `scores/baseline-scores.json`.
+**End:** `rules/v2/` created, checkpoint taken, context reset.
+
+- [ ] **3B.1** Launch 5 concurrent subagents (one per task) to execute tasks with rules v1:
+  - Subagent 1: task-001 → `outputs/evolved/round-02/task-001/`
+  - Subagent 2: task-002 → `outputs/evolved/round-02/task-002/`
+  - Subagent 3: task-003 → `outputs/evolved/round-02/task-003/`
+  - Subagent 4: task-004 → `outputs/evolved/round-02/task-004/`
+  - Subagent 5: task-005 → `outputs/evolved/round-02/task-005/`
+  - Each subagent reads `tasks/task-00N.md` + `rules/current/*.md` and writes output to its designated directory
+- [ ] **3B.2** Run acceptance tests against all 5 outputs: `pytest tasks/acceptance/ -v`
+- [ ] **3B.3** Judge all 5 outputs via `python scripts/judge.py` (run 3x each, take median). Cross-check against acceptance test results
+- [ ] **3B.4** Run consolidation: `python scripts/consolidate.py --round 02` → proposal to `consolidation/proposals/round-02.md`, debate to `consolidation/debates/round-02.md`
+- [ ] **3B.5** 🔒 **Human approval gate:** Review `consolidation/proposals/round-02.md` → record decision + rationale in `consolidation/approvals/round-02.md`
+- [ ] **3B.6** If approved: `python scripts/apply_rules.py --proposal consolidation/proposals/round-02.md` → creates `rules/v2/`, updates `rules/current` symlink
+- [ ] **3B.7** Git checkpoint: `data: evolved round 2 scores + rules v2`
+- [ ] **3B.8** **`/steadows-checkpoint`** — snapshot before context reset
+
+**→ Reset context before Phase 3C.**
+
+---
+
+## Phase 3C: Round 3 + Holdout (final measurement, rules v2)
+
+**Start:** Fresh session. Load `.context/snapshots/` (latest) + `GSD_PLAN.md` Phase 3C section + `rules/v2/*.md`.
+**End:** All final scores recorded, holdout post-eval complete, context reset.
+
+### Round 3 — Final measurement (no consolidation)
+
+- [ ] **3C.1** Launch 5 concurrent subagents (one per task) to execute tasks with rules v2:
+  - Subagent 1: task-001 → `outputs/evolved/round-03/task-001/`
+  - Subagent 2: task-002 → `outputs/evolved/round-03/task-002/`
+  - Subagent 3: task-003 → `outputs/evolved/round-03/task-003/`
+  - Subagent 4: task-004 → `outputs/evolved/round-03/task-004/`
+  - Subagent 5: task-005 → `outputs/evolved/round-03/task-005/`
+- [ ] **3C.2** Run acceptance tests against all 5 outputs: `pytest tasks/acceptance/ -v`
+- [ ] **3C.3** Judge all 5 outputs via `python scripts/judge.py` (run 3x each, take median). No consolidation — this is the final measurement
 
 ### Holdout Post-Evaluation (generalization test — isolated worktree)
 
-Run in a **fresh git worktree** containing only `rules/v2/` + `holdout/` directory (specs + acceptance tests + pre outputs). No evolution outputs, no evolution task history visible. Same artifact flow as Phase 1 holdout.
+Run in a **fresh git worktree** containing only `rules/v2/` + `holdout/` directory. No evolution outputs visible. Same artifact flow as Phase 1 holdout.
 
-- [ ] **3.26** Create isolated worktree for holdout post-evaluation (rules v2 + `holdout/` directory)
-- [ ] **3.27** Run holdout-001 in worktree with evolved rules (v2) → `holdout/outputs/post/holdout-001/`
-- [ ] **3.28** Run holdout-002 in worktree → `holdout/outputs/post/holdout-002/`
-- [ ] **3.29** Run holdout-003 in worktree → `holdout/outputs/post/holdout-003/`
-- [ ] **3.30** Run holdout acceptance tests in worktree against all 3 outputs. Record pass/fail per test case
-- [ ] **3.31** Judge all 3 holdout outputs in worktree (same 3x median protocol)
-- [ ] **3.32** Commit holdout post outputs + scores inside worktree. Merge worktree branch to main. Delete worktree. Post outputs now exist in `holdout/outputs/post/` in the repo
+- [ ] **3C.4** Create isolated worktree for holdout post-evaluation (rules v2 + `holdout/` directory)
+- [ ] **3C.5** Launch 3 concurrent subagents in the worktree to execute holdout tasks with rules v2:
+  - Subagent 1: holdout-001 → `holdout/outputs/post/holdout-001/`
+  - Subagent 2: holdout-002 → `holdout/outputs/post/holdout-002/`
+  - Subagent 3: holdout-003 → `holdout/outputs/post/holdout-003/`
+- [ ] **3C.6** Run holdout acceptance tests in worktree: `pytest holdout/acceptance/ -v`. Record pass/fail per test case
+- [ ] **3C.7** Judge all 3 holdout outputs in worktree (same 3x median protocol)
+- [ ] **3C.8** Commit holdout post outputs + scores inside worktree. Merge worktree branch to main. Delete worktree
 
 ### Compile and Checkpoint
 
-- [ ] **3.33** Compile all evolved scores → `scores/evolved-scores.json` (per-round, per-task, per-dimension)
-- [ ] **3.34** Compile holdout scores → `scores/holdout-scores.json` (pre vs post, per-task, per-dimension, including acceptance test pass rates)
-- [ ] **3.35** Git checkpoint: `data: evolved round 3 + holdout post scores (final)`
-- [ ] **3.36** **`/steadows-verify`** — Phase 3 quality gate. Verify: all 15 evolved outputs exist in `outputs/evolved/` (5 tasks x 3 rounds), all 3 holdout pre outputs exist in `holdout/outputs/pre/`, all 3 holdout post outputs exist in `holdout/outputs/post/`, all acceptance tests ran per round with recorded results, all judge scores recorded with 3x medians, correctness scores consistent with acceptance results, 2 consolidation proposals generated with approval rationales recorded in `consolidation/approvals/`, rules versions v1-v2 exist with valid diffs and attribution labels, each rule file under 150 lines, `rules/current` symlink points to v2, all session logs captured (all invocation types: executor + judge + consolidation agents), no files modified outside sandbox
+- [ ] **3C.9** Compile all evolved scores → `scores/evolved-scores.json` (per-round, per-task, per-dimension)
+- [ ] **3C.10** Compile holdout scores → `scores/holdout-scores.json` (pre vs post, per-task, per-dimension, including acceptance test pass rates)
+- [ ] **3C.11** Git checkpoint: `data: evolved round 3 + holdout post scores (final)`
+- [ ] **3C.12** **`/steadows-checkpoint`** — snapshot before context reset
+
+**→ Reset context before Phase 3D.**
+
+---
+
+## Phase 3D: Verify
+
+**Start:** Fresh session. Load `.context/snapshots/` (latest) + `GSD_PLAN.md` Phase 3D section.
+**End:** Phase 3 quality gate passed.
+
+- [ ] **3D.1** **`/steadows-verify`** — Phase 3 quality gate. Verify: all 15 evolved outputs exist in `outputs/evolved/` (5 tasks x 3 rounds), all 3 holdout pre outputs exist in `holdout/outputs/pre/`, all 3 holdout post outputs exist in `holdout/outputs/post/`, all acceptance tests ran per round with recorded results, all judge scores recorded with 3x medians, correctness scores consistent with acceptance results, 2 consolidation proposals generated with approval rationales recorded in `consolidation/approvals/`, rules versions v1-v2 exist with valid diffs and attribution labels, each rule file under 150 lines, `rules/current` symlink points to v2, all session logs captured (all invocation types: executor + judge + consolidation agents), no files modified outside sandbox
 
 ---
 
@@ -553,7 +599,7 @@ Phase 4 Timeline (after Phase 3):
 | 2.4 | Consolidation | `/steadows-tdd` | `scripts/consolidate.py` — tests before code |
 | 2.6 | Consolidation | `/steadows-tdd` | `scripts/apply_rules.py` — tests before code (including validation: 150-line cap, schema, change scope) |
 | 2.10 | Consolidation | `/steadows-verify` | Agent prompts, approval rubric, scripts, E2E test, sandbox |
-| 3.36 | Evolved | `/steadows-verify` | All 15 evolved + 6 isolated holdout outputs, acceptance tests, scores, rule versions, approval records with rationale, session logs (all invocation types), sandbox |
+| 3D.1 | Evolved | `/steadows-verify` | All 15 evolved + 6 isolated holdout outputs, acceptance tests, scores, rule versions, approval records with rationale, session logs (all invocation types), sandbox |
 | 4.9 | Analysis | `/steadows-verify` | All analysis files including holdout generalization verdict, report, reproducibility |
 
 **CRITICAL: `/steadows-tdd` and `/steadows-verify` are the canonical skill names. Do NOT substitute with alternative tools, manual checks, or ad-hoc test runs. Invoke these skills exactly as named.**
