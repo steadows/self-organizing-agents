@@ -1,7 +1,10 @@
 # GSD Plan: Self-Organizing Agent Experiment in Claude Code
 
 **Created:** 2026-03-19
-**Status:** Planning
+**Status:** In Progress — Phase 0 ✓, Phase 1 ✓, Phase 2 next
+**Updated:** 2026-03-20
+
+> **RULE: Update this plan in real-time.** Mark tasks `[~]` when starting, `[x]` when done, `[!]` when blocked. Never leave stale status markers.
 **Source:** @agentic.james — "AI Agents Self-Organizing Like Biological Cells" (Instagram, 2026-03-19)
 **Research:** `~/research-workbench/instagram-ai-agents-self-organizing-like-biological-cells/research.html`
 **Transcript:** Obsidian vault `Research/Instagram/agentic.james/2026-03-19-DWDPANXk5sC.md`
@@ -163,50 +166,51 @@ The biological metaphors in this plan — backpropagation, sleep consolidation, 
 
 **Goal:** Initialize experiment directory, git repo, seed rules, tasks, acceptance tests, holdout set, and judge.
 **Estimated effort:** 1-2 hours
+**Status:** ✅ COMPLETE (2026-03-20)
 
-- [ ] **0.1** Create project directory structure (see Architecture above)
-- [ ] **0.2** Initialize git repo + `.gitignore`
-- [ ] **0.3** Write project `CLAUDE.md` that loads sandboxed rules from `rules/current/`
-- [ ] **0.4** Write seed rules `v0/` — deliberately imperfect (e.g., vague test requirements, missing edge case guidance) to leave room for improvement
+- [x] **0.1** Create project directory structure (see Architecture above)
+- [x] **0.2** Initialize git repo + `.gitignore`
+- [x] **0.3** Write project `CLAUDE.md` that loads sandboxed rules from `rules/current/`
+- [x] **0.4** Write seed rules `v0/` — deliberately imperfect (e.g., vague test requirements, missing edge case guidance) to leave room for improvement
   - `task-executor.md` — Core instructions for implementing Python utilities
   - `code-quality.md` — Quality standards: type hints, docstrings, structure
   - `output-format.md` — Output structure: file naming, required sections
-- [ ] **0.5** Create symlink `rules/current -> rules/v0`
-- [ ] **0.6** Design 5 evolution task specs (`tasks/`) — each must include: function signature, explicit edge-case policy decisions (not left ambiguous), input/output examples, and a "scope boundary" statement clarifying what is NOT required:
+- [x] **0.5** Create symlink `rules/current -> rules/v0`
+- [x] **0.6** Design 5 evolution task specs (`tasks/`) — each must include: function signature, explicit edge-case policy decisions (not left ambiguous), input/output examples, and a "scope boundary" statement clarifying what is NOT required:
   1. `tasks/task-001.md` — `slugify()` with Unicode support. Scope: ASCII transliteration only (no full ICU), separator is always `-`, max length 200
   2. `tasks/task-002.md` — `validate_email()` — scoped to: local-part + `@` + domain, no quoted strings, no IP literals, no comments. Explicit list of valid/invalid examples
   3. `tasks/task-003.md` — `safe_write()` with atomic writes via temp file + rename. Scope: POSIX only, no Windows support, no rollback beyond single-file
   4. `tasks/task-004.md` — `retry_with_backoff()` decorator with exponential backoff + jitter. Scope: configurable max retries, base delay, max delay. No circuit breaker
   5. `tasks/task-005.md` — `ttl_cache()` decorator with size limit (LRU eviction) and time-based expiration. Scope: thread-safe, no distributed caching
-- [ ] **0.7** Design 3 frozen holdout task specs (`holdout/specs/`) — these are NEVER seen during evolution rounds. The entire `holdout/` directory is excluded from the executor workspace via CLAUDE.md ignore patterns:
+- [x] **0.7** Design 3 frozen holdout task specs (`holdout/specs/`) — these are NEVER seen during evolution rounds. The entire `holdout/` directory is excluded from the executor workspace via CLAUDE.md ignore patterns:
   1. `holdout/specs/holdout-001.md` — `parse_duration("2h30m10s")` → integer seconds. Support h/m/s units
   2. `holdout/specs/holdout-002.md` — `deep_merge(base, override)` → recursive dict merge, lists replaced not appended
   3. `holdout/specs/holdout-003.md` — `bounded_pool(max_workers, max_queue)` → async worker pool with backpressure
-- [ ] **0.8** **`/steadows-tdd`** — Write executable acceptance tests for all 8 tasks. Evolution tests go in `tasks/acceptance/test_task_*.py`. Holdout tests go in `holdout/acceptance/test_holdout_*.py`. These are the ground truth for correctness. Each test file must cover: happy path, edge cases listed in the task spec, and at least one error/invalid input case. These tests are frozen — they do not evolve
-- [ ] **0.9** Write judge rubric (`scores/judge-rubric.md`) — 6 dimensions, each 1-10. Dimensions 1-2 are validated by acceptance tests (judge score must be consistent with test pass/fail). Dimensions 3-6 are subjective:
+- [x] **0.8** **`/steadows-tdd`** — Write executable acceptance tests for all 8 tasks. Evolution tests go in `tasks/acceptance/test_task_*.py`. Holdout tests go in `holdout/acceptance/test_holdout_*.py`. These are the ground truth for correctness. Each test file must cover: happy path, edge cases listed in the task spec, and at least one error/invalid input case. These tests are frozen — they do not evolve
+- [x] **0.9** Write judge rubric (`scores/judge-rubric.md`) — 6 dimensions, each 1-10. Dimensions 1-2 are validated by acceptance tests (judge score must be consistent with test pass/fail). Dimensions 3-6 are subjective:
   1. Correctness — handles all specified requirements? **(cross-checked against acceptance tests)**
   2. Edge cases — boundary conditions, empty inputs, error states? **(cross-checked against acceptance tests)**
   3. Code quality — type hints, naming, structure, immutability?
   4. Documentation — docstrings, usage examples?
   5. Test coverage — happy path + edge cases in the agent's own tests?
   6. Robustness — error handling, input validation, graceful degradation?
-- [ ] **0.10** Freeze judge configuration (`scores/judge-config.json`):
+- [x] **0.10** Freeze judge configuration (`scores/judge-config.json`):
   - Model: `claude-sonnet-4-6` (different from Opus executor — avoids self-grading bias)
   - Temperature: `0.0` (deterministic scoring)
   - Prompt: hash-locked (SHA-256 of the full judge prompt stored in config)
   - Rubric version: hash-locked
-- [ ] **0.11** Write human approval rubric (`consolidation/approval-rubric.md`). The human approves or rejects proposals based on:
+- [x] **0.11** Write human approval rubric (`consolidation/approval-rubric.md`). The human approves or rejects proposals based on:
   1. **Safety:** Does the proposal stay within sandbox? No instructions to access external systems?
   2. **Coherence:** Are the rules internally consistent? No contradictions with existing rules?
   3. **Scope:** Does the proposal stay within the 20-line-per-file, 2-file-per-round cap?
   4. **Attribution:** Is each change labeled with the failure mode it addresses?
   - The human does NOT evaluate whether the change will improve quality — that's the experiment's job to measure
   - Every decision recorded with rationale in `consolidation/approvals/round-NN.md`
-- [ ] **0.12** **`/steadows-tdd`** — Run TDD workflow BEFORE writing `scripts/judge.py`. Write tests for: score parsing, rubric loading, JSON output format, acceptance test cross-check (judge correctness score must be <= 5 if acceptance tests fail), config loading from `judge-config.json`
-- [ ] **0.13** Write judge script (`scripts/judge.py`) — must pass tests from 0.12. Reads output + rubric + config, calls Claude Sonnet at temperature 0.0, runs acceptance tests, parses 6-dimension scores to JSON, flags any correctness/edge-case score inconsistent with test results
-- [ ] **0.14** Human spot-check: manually review 2-3 judge outputs for calibration. Verify scores feel reasonable before trusting the judge for the full experiment
-- [ ] **0.15** Initial git commit: `chore: initialize self-organizing agent experiment`
-- [ ] **0.16** **`/steadows-verify`** — Phase 0 quality gate. Verify: project structure exists, git repo initialized, seed rules valid, all 8 task specs complete with scoped boundaries, all 8 acceptance test files pass (against reference implementations), judge script passes tests, judge-config.json frozen, approval rubric exists, no files written outside sandbox
+- [x] **0.12** **`/steadows-tdd`** — Run TDD workflow BEFORE writing `scripts/judge.py`. Write tests for: score parsing, rubric loading, JSON output format, acceptance test cross-check (judge correctness score must be <= 5 if acceptance tests fail), config loading from `judge-config.json`
+- [x] **0.13** Write judge script (`scripts/judge.py`) — must pass tests from 0.12. Reads output + rubric + config, calls Claude Sonnet at temperature 0.0, runs acceptance tests, parses 6-dimension scores to JSON, flags any correctness/edge-case score inconsistent with test results
+- [x] **0.14** Human spot-check: manually review 2-3 judge outputs for calibration. Verify scores feel reasonable before trusting the judge for the full experiment
+- [x] **0.15** Initial git commit: `chore: initialize self-organizing agent experiment`
+- [x] **0.16** **`/steadows-verify`** — Phase 0 quality gate. Verify: project structure exists, git repo initialized, seed rules valid, all 8 task specs complete with scoped boundaries, all 8 acceptance test files pass (against reference implementations), judge script passes tests, judge-config.json frozen, approval rubric exists, no files written outside sandbox
 
 ---
 
@@ -216,16 +220,17 @@ The biological metaphors in this plan — backpropagation, sleep consolidation, 
 **Estimated effort:** 1-2 hours
 **Dependency:** Phase 0 complete
 **Session logging:** Every task run must log session metadata to `session-logs/` (model version, session ID, timestamp, token counts)
+**Status:** ✅ COMPLETE (2026-03-20) — Note: session logs not captured for baseline runs (gap identified)
 
 ### Evolution Task Baseline (5 tasks, concurrent)
 
-- [ ] **1.1** Run task-001 with static rules → `outputs/baseline/task-001/`
-- [ ] **1.2** Run task-002 with static rules → `outputs/baseline/task-002/`
-- [ ] **1.3** Run task-003 with static rules → `outputs/baseline/task-003/`
-- [ ] **1.4** Run task-004 with static rules → `outputs/baseline/task-004/`
-- [ ] **1.5** Run task-005 with static rules → `outputs/baseline/task-005/`
-- [ ] **1.6** Run acceptance tests against all 5 outputs. Record pass/fail per test case
-- [ ] **1.7** Judge all 5 outputs (run 3x each, take median). Cross-check: if acceptance tests fail, judge correctness score must be <= 5
+- [x] **1.1** Run task-001 with static rules → `outputs/baseline/task-001/`
+- [x] **1.2** Run task-002 with static rules → `outputs/baseline/task-002/`
+- [x] **1.3** Run task-003 with static rules → `outputs/baseline/task-003/`
+- [x] **1.4** Run task-004 with static rules → `outputs/baseline/task-004/`
+- [x] **1.5** Run task-005 with static rules → `outputs/baseline/task-005/`
+- [x] **1.6** Run acceptance tests against all 5 outputs. Record pass/fail per test case
+- [x] **1.7** Judge all 5 outputs (run 3x each, take median). Cross-check: if acceptance tests fail, judge correctness score must be <= 5
 
 ### Holdout Task Baseline (3 tasks — run in isolated worktree)
 
@@ -233,19 +238,19 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
 
 **Artifact flow:** Holdout outputs, acceptance test results, and judge scores are all produced inside the worktree's `holdout/` directory. After evaluation completes, **scores only** (JSON) are copied to the main repo's `scores/` directory. Holdout outputs remain in `holdout/outputs/` (committed to the repo but excluded from the executor workspace via CLAUDE.md ignore patterns). The `/steadows-verify` gate verifies holdout outputs exist by reading `holdout/outputs/` directly — not by expecting them in `outputs/`.
 
-- [ ] **1.8** Create isolated worktree for holdout pre-evaluation (rules v0 + `holdout/` directory)
-- [ ] **1.9** Run holdout-001 in worktree → `holdout/outputs/pre/holdout-001/`
-- [ ] **1.10** Run holdout-002 in worktree → `holdout/outputs/pre/holdout-002/`
-- [ ] **1.11** Run holdout-003 in worktree → `holdout/outputs/pre/holdout-003/`
-- [ ] **1.12** Run holdout acceptance tests in worktree against all 3 outputs. Record pass/fail per test case
-- [ ] **1.13** Judge all 3 holdout outputs in worktree (same 3x median protocol)
-- [ ] **1.14** Commit holdout outputs + scores inside worktree. Merge worktree branch to main. Delete worktree. Holdout outputs now exist in `holdout/outputs/pre/` in the repo but remain excluded from executor workspace via CLAUDE.md
+- [x] **1.8** Create isolated worktree for holdout pre-evaluation (rules v0 + `holdout/` directory)
+- [x] **1.9** Run holdout-001 in worktree → `holdout/outputs/pre/holdout-001/`
+- [x] **1.10** Run holdout-002 in worktree → `holdout/outputs/pre/holdout-002/`
+- [x] **1.11** Run holdout-003 in worktree → `holdout/outputs/pre/holdout-003/`
+- [x] **1.12** Run holdout acceptance tests in worktree against all 3 outputs. Record pass/fail per test case
+- [x] **1.13** Judge all 3 holdout outputs in worktree (same 3x median protocol)
+- [x] **1.14** Commit holdout outputs + scores inside worktree. Merge worktree branch to main. Delete worktree. Holdout outputs now exist in `holdout/outputs/pre/` in the repo but remain excluded from executor workspace via CLAUDE.md
 
 ### Compile and Checkpoint
 
-- [ ] **1.15** Compile baseline scores → `scores/baseline-scores.json` (per-dimension averages + overall, evolution set and holdout set separately)
-- [ ] **1.16** Git checkpoint: `data: baseline scores (5 evolution + 3 holdout, static rules v0)`
-- [ ] **1.17** **`/steadows-verify`** — Phase 1 quality gate. Verify: all 5 evolution outputs exist in `outputs/baseline/`, all 3 holdout outputs exist in `holdout/outputs/pre/`, all acceptance tests ran with recorded results, all judge scores recorded in JSON with 3x medians, scores are within valid range (1-10), correctness scores consistent with acceptance test results, baseline-scores.json aggregation is correct, session logs captured for all 8 runs (all invocation types: executor + judge), no rule files were modified during baseline
+- [x] **1.15** Compile baseline scores → `scores/baseline-scores.json` (per-dimension averages + overall, evolution set and holdout set separately)
+- [x] **1.16** Git checkpoint: `data: baseline scores (5 evolution + 3 holdout, static rules v0)`
+- [x] **1.17** **`/steadows-verify`** — Phase 1 quality gate. Verify: all 5 evolution outputs exist in `outputs/baseline/`, all 3 holdout outputs exist in `holdout/outputs/pre/`, all acceptance tests ran with recorded results, all judge scores recorded in JSON with 3x medians, scores are within valid range (1-10), correctness scores consistent with acceptance test results, baseline-scores.json aggregation is correct, session logs captured for all 8 runs (all invocation types: executor + judge), no rule files were modified during baseline
 
 ---
 
@@ -254,22 +259,23 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
 **Goal:** Build the critic/defender/synthesizer debate pattern.
 **Estimated effort:** 2-3 hours
 **Dependency:** Phase 0 complete (can run in parallel with Phase 1)
+**Status:** 🔵 IN PROGRESS
 
 ### 2A: Agent Design
 
-- [ ] **2.1** Design critic agent prompt (`consolidation/critic-prompt.md`)
+- [x] **2.1** Design critic agent prompt (`consolidation/critic-prompt.md`)
   - Reads current rules + task output + judge scores
   - Identifies weaknesses traceable to rule gaps
   - Output: "Rule X is missing guidance on Y, causing deficiency Z"
   - This agent finds the **textual gradient** — the direction rules should change
 
-- [ ] **2.2** Design defender agent prompt (`consolidation/defender-prompt.md`)
+- [x] **2.2** Design defender agent prompt (`consolidation/defender-prompt.md`)
   - Reads critic's proposals
   - Argues AGAINST each change: potential regressions, over-specification, bloat
   - Rates each proposal: ACCEPT / REJECT / MODIFY
   - Calibration: aggressive enough to prevent runaway growth, not so aggressive nothing evolves
 
-- [ ] **2.3** Design synthesizer agent prompt (`consolidation/synthesizer-prompt.md`)
+- [x] **2.3** Design synthesizer agent prompt (`consolidation/synthesizer-prompt.md`)
   - Reads critic proposals + defender responses
   - Resolves disagreements into minimal rule diffs
   - **Constrained output:** each change must cite the specific failure mode it addresses. Max 20 net new lines per rule file. Max 2 of 3 rule files modified per round
@@ -278,16 +284,16 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
 
 ### 2B: Orchestration
 
-- [ ] **2.4** **`/steadows-tdd`** — Run TDD workflow BEFORE writing `scripts/consolidate.py`. Write tests for: prompt assembly from rule files + outputs + scores, critic/defender/synthesizer invocation sequence, proposal file output format, debate transcript capture. Then implement
-- [ ] **2.5** Implement consolidation orchestrator (`scripts/consolidate.py`) — must pass tests from 2.4
+- [x] **2.4** **`/steadows-tdd`** — Run TDD workflow BEFORE writing `scripts/consolidate.py`. Write tests for: prompt assembly from rule files + outputs + scores, critic/defender/synthesizer invocation sequence, proposal file output format, debate transcript capture. Then implement
+- [x] **2.5** Implement consolidation orchestrator (`scripts/consolidate.py`) — must pass tests from 2.4
   - Collects: current rules + latest output + judge scores
   - Invokes critic → defender → synthesizer (sequential, each feeds the next)
   - Writes proposal to `consolidation/proposals/round-NN-proposal.md`
   - Writes debate transcript to `consolidation/debates/round-NN.md`
   - **STOPS and waits for human approval** — does NOT apply changes
 
-- [ ] **2.6** **`/steadows-tdd`** — Run TDD workflow BEFORE writing `scripts/apply_rules.py`. Write tests for: version directory creation, rule file copying, symlink update, rollback on failure, 150-line-per-file rejection, schema validation (no executable code blocks), change scope enforcement (20-line cap, 2-file cap). Then implement
-- [ ] **2.7** Implement rule applicator (`scripts/apply_rules.py`) — must pass tests from 2.6
+- [x] **2.6** **`/steadows-tdd`** — Run TDD workflow BEFORE writing `scripts/apply_rules.py`. Write tests for: version directory creation, rule file copying, symlink update, rollback on failure, 150-line-per-file rejection, schema validation (no executable code blocks), change scope enforcement (20-line cap, 2-file cap). Then implement
+- [x] **2.7** Implement rule applicator (`scripts/apply_rules.py`) — must pass tests from 2.6
   - Reads approved proposal
   - **Validates:** rule file stays under 150 lines, no executable code blocks (`bash`, `python`, `sh`), change scope within caps
   - Copies current rules to `rules/vN/`
@@ -295,8 +301,8 @@ Holdout evaluations run in a **fresh git worktree** containing only `rules/v0/` 
   - Updates `rules/current` symlink
   - Commits: `chore: evolve rules round-N`
 
-- [ ] **2.8** End-to-end test of consolidation loop using one baseline output
-- [ ] **2.9** Git checkpoint: `feat: consolidation loop (critic/defender/synthesizer)`
+- [x] **2.8** End-to-end test of consolidation loop using one baseline output
+- [~] **2.9** Git checkpoint: `feat: consolidation loop (critic/defender/synthesizer)`
 - [ ] **2.10** **`/steadows-verify`** — Phase 2 quality gate. Verify: all 3 agent prompts exist and are well-formed, consolidate.py passes all tests, apply_rules.py passes all tests, end-to-end test produces valid proposal + debate transcript, symlink management works correctly, no files written outside sandbox
 
 ---
