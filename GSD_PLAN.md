@@ -1,7 +1,7 @@
 # GSD Plan: Self-Organizing Agent Experiment in Claude Code
 
 **Created:** 2026-03-19
-**Status:** In Progress — Phase 0 ✓, Phase 1 ✓, Phase 2 next
+**Status:** Complete — All Phases Done
 **Updated:** 2026-03-20
 
 > **RULE: Update this plan in real-time.** Mark tasks `[~]` when starting, `[x]` when done, `[!]` when blocked. Never leave stale status markers.
@@ -417,7 +417,7 @@ Run in a **fresh git worktree** containing only `rules/v2/` + `holdout/` directo
 **Start:** Fresh session. Load `.context/snapshots/` (latest) + `GSD_PLAN.md` Phase 3D section.
 **End:** Phase 3 quality gate passed.
 
-- [ ] **3D.1** **`/steadows-verify`** — Phase 3 quality gate. Verify: all 15 evolved outputs exist in `outputs/evolved/` (5 tasks x 3 rounds), all 3 holdout pre outputs exist in `holdout/outputs/pre/`, all 3 holdout post outputs exist in `holdout/outputs/post/`, all acceptance tests ran per round with recorded results, all judge scores recorded with 3x medians, correctness scores consistent with acceptance results, 2 consolidation proposals generated with approval rationales recorded in `consolidation/approvals/`, rules versions v1-v2 exist with valid diffs and attribution labels, each rule file under 150 lines, `rules/current` symlink points to v2, all session logs captured (all invocation types: executor + judge + consolidation agents), no files modified outside sandbox
+- [x] **3D.1** **`/steadows-verify`** — Phase 3 quality gate. Verify: all 15 evolved outputs exist in `outputs/evolved/` (5 tasks x 3 rounds), all 3 holdout pre outputs exist in `holdout/outputs/pre/`, all 3 holdout post outputs exist in `holdout/outputs/post/`, all acceptance tests ran per round with recorded results, all judge scores recorded with 3x medians, correctness scores consistent with acceptance results, 2 consolidation proposals generated with approval rationales recorded in `consolidation/approvals/`, rules versions v1-v2 exist with valid diffs and attribution labels, each rule file under 150 lines, `rules/current` symlink points to v2, all session logs captured (all invocation types: executor + judge + consolidation agents), no files modified outside sandbox
 
 ---
 
@@ -427,13 +427,13 @@ Run in a **fresh git worktree** containing only `rules/v2/` + `holdout/` directo
 **Estimated effort:** 1-2 hours
 **Dependency:** Phase 1 + Phase 3 complete
 
-- [ ] **4.1** Score comparison (`analysis/comparison.md`) — baseline vs round 1 vs round 2 vs round 3, per-dimension and overall deltas, per-task trends across rounds. Include both LLM judge scores and acceptance test pass rates
-- [ ] **4.2** Holdout generalization analysis (`analysis/holdout-analysis.md`) — compare holdout pre (rules v0) vs holdout post (rules v2). **This is the key generalization test.** If holdout scores improve, the rules generalized beyond the 5 evolution tasks. If only evolution-set scores improve, the rules overfit. Report the delta with the same rigor as the main comparison
-- [ ] **4.3** Behavioral drift analysis (`analysis/drift-analysis.md`) — diff rules v0→v1→v2, categorize changes (new guidance, clarification, removal, restructuring), flag bloat, measure rule file growth in lines, verify all changes have attribution labels
-- [ ] **4.4** Cost tracking (`analysis/cost-tracking.md`) — tokens per round from `session-logs/`, broken down by invocation type (executor, judge, consolidation). Cost per quality-point improvement. Baseline phase vs evolved phase total. Total experiment cost vs $85 budget ceiling
-- [ ] **4.5** Convergence analysis (`analysis/convergence.md`) — do per-round averages improve monotonically? does round 3 plateau vs round 2? which dimensions converge fastest? do any tasks resist improvement across all rounds? do acceptance test pass rates correlate with judge scores?
-- [ ] **4.6** Experiment report (`analysis/report.md`) — hypothesis, methodology, results (including holdout), findings, limitations (including: human approval as confound, task complexity ceiling, model-specific results), recommendations for whether to proceed to Experiment 2
-- [ ] **4.7** Dev journal entry (`~/dev-journal/2026-03-XX.md`)
+- [x] **4.1** Score comparison (`analysis/comparison.md`) — baseline vs round 1 vs round 2 vs round 3, per-dimension and overall deltas, per-task trends across rounds. Include both LLM judge scores and acceptance test pass rates
+- [x] **4.2** Holdout generalization analysis (`analysis/holdout-analysis.md`) — compare holdout pre (rules v0) vs holdout post (rules v2). **This is the key generalization test.** If holdout scores improve, the rules generalized beyond the 5 evolution tasks. If only evolution-set scores improve, the rules overfit. Report the delta with the same rigor as the main comparison
+- [x] **4.3** Behavioral drift analysis (`analysis/drift-analysis.md`) — diff rules v0→v1→v2, categorize changes (new guidance, clarification, removal, restructuring), flag bloat, measure rule file growth in lines, verify all changes have attribution labels
+- [x] **4.4** Cost tracking (`analysis/cost-tracking.md`) — tokens per round from `session-logs/`, broken down by invocation type (executor, judge, consolidation). Cost per quality-point improvement. Baseline phase vs evolved phase total. Total experiment cost vs $85 budget ceiling
+- [x] **4.5** Convergence analysis (`analysis/convergence.md`) — do per-round averages improve monotonically? does round 3 plateau vs round 2? which dimensions converge fastest? do any tasks resist improvement across all rounds? do acceptance test pass rates correlate with judge scores?
+- [x] **4.6** Experiment report (`analysis/report.md`) — hypothesis, methodology, results (including holdout), findings, limitations (including: human approval as confound, task complexity ceiling, model-specific results), recommendations for whether to proceed to Experiment 2
+- [x] **4.7** Dev journal entry (`~/dev-journal/2026-03-XX.md`)
 - [ ] **4.8** Final git commit: `docs: experiment analysis and report`
 - [ ] **4.9** **`/steadows-verify`** — Phase 4 quality gate (final). Verify: all analysis files exist, comparison includes per-dimension deltas, holdout analysis explicitly states generalization verdict, drift analysis covers all rule versions with attribution labels, cost tracking sourced from session-logs with per-round breakdown, convergence analysis addresses plateau question, report includes methodology + results + holdout + limitations, all success criteria evaluated, experiment is fully reproducible from git history
 
