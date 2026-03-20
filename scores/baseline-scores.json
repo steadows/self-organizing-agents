@@ -1,0 +1,64 @@
+{
+  "phase": "baseline",
+  "rules_version": "v0",
+  "evolution_set": {
+    "tasks": {
+      "task-001": {
+        "overall": 7.7,
+        "acceptance_pass": true
+      },
+      "task-002": {
+        "overall": 8.2,
+        "acceptance_pass": true
+      },
+      "task-003": {
+        "overall": 7.8,
+        "acceptance_pass": true
+      },
+      "task-004": {
+        "overall": 8.3,
+        "acceptance_pass": true
+      },
+      "task-005": {
+        "overall": 8.2,
+        "acceptance_pass": true
+      }
+    },
+    "dimension_averages": {
+      "correctness": 8.4,
+      "edge_cases": 8.4,
+      "code_quality": 8,
+      "documentation": 8,
+      "test_coverage": 8.2,
+      "robustness": 7.2
+    },
+    "overall_average": 8.0,
+    "acceptance_pass_rate": "5/5"
+  },
+  "holdout_set": {
+    "tasks": {
+      "holdout-001": {
+        "overall": 8.7,
+        "acceptance_pass": true
+      },
+      "holdout-002": {
+        "overall": 8.3,
+        "acceptance_pass": true
+      },
+      "holdout-003": {
+        "overall": 8.3,
+        "acceptance_pass": true
+      }
+    },
+    "dimension_averages": {
+      "correctness": 9,
+      "edge_cases": 9,
+      "code_quality": 8.3,
+      "documentation": 8,
+      "test_coverage": 8.3,
+      "robustness": 8
+    },
+    "overall_average": 8.4,
+    "acceptance_pass_rate": "3/3"
+  }
+}

@@ -17,7 +17,7 @@ if output_dir not in sys.path:
 
 import pytest
 
-from holdout_001 import parse_duration
+from parse_duration import parse_duration
 
 
 # --- Happy path ---

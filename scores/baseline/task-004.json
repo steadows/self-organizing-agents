@@ -1,0 +1,34 @@
+{
+  "task_id": "task-004",
+  "phase": "baseline",
+  "rules_version": "v0",
+  "scores": {
+    "correctness": {
+      "score": 9,
+      "justification": "All spec requirements implemented precisely: decorator factory pattern, exponential backoff formula min(base_delay * 2^n, max_delay), jitter via random.uniform(0, delay), time.sleep between retries, catches only specified exceptions, re-raises last exception after exhaustion, functools.wraps preserves metadata, max_retries=0 means one call, negative max_retries raises ValueError. All 15 acceptance tests pass."
+    },
+    "edge_cases": {
+      "score": 9,
+      "justification": "All spec edge cases covered: max_retries=0 (no retry), negative max_retries (ValueError), success on first call, success on retry, unmatched exception propagates immediately, base_delay=0 (immediate retries), max_delay < base_delay (capped from first retry). The implementation is clean and handles all boundary conditions."
+    },
+    "code_quality": {
+      "score": 8,
+      "justification": "Clean 55-line implementation. Type hints on all parameters and return type. Uses TypeVar for the decorator typing (F = TypeVar('F', bound=Callable[..., Any])). The loop structure with range(max_retries + 1) is clear and correct. The # type: ignore comments are appropriate for the decorator typing limitations. Minor: BaseException | None type annotation on last_exception is good."
+    },
+    "documentation": {
+      "score": 8,
+      "justification": "Function docstring is comprehensive with Args (all 4 parameters with descriptions), Returns, and Raises sections. The module docstring is brief but descriptive. No inline comments needed as the code is self-explanatory. Parameter descriptions include semantic detail (e.g., 'Must be >= 0. If 0, the function is called once with no retry')."
+    },
+    "test_coverage": {
+      "score": 9,
+      "justification": "11 tests with excellent coverage: success on first call, success on retry, exhaustion with correct exception, max_retries=0, negative max_retries ValueError, only catches specified exceptions, metadata preservation, exponential backoff verification via mocking (including cap validation), base_delay=0, max_delay < base_delay, args/kwargs forwarding. The mock-based delay verification (test_exponential_backoff_with_cap) is particularly well-done, asserting exact delay sequences."
+    },
+    "robustness": {
+      "score": 7,
+      "justification": "Good validation: ValueError for negative max_retries at decoration time. Clean exception handling with only specified exceptions caught. However, no validation on base_delay or max_delay types/values (negative base_delay or max_delay would produce odd but not crashing behavior). No validation that exceptions is actually a tuple of exception types."
+    }
+  },
+  "overall": 8.3,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "15/15 passed"
+}

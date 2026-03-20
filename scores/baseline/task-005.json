@@ -1,0 +1,34 @@
+{
+  "task_id": "task-005",
+  "phase": "baseline",
+  "rules_version": "v0",
+  "scores": {
+    "correctness": {
+      "score": 8,
+      "justification": "All spec requirements implemented: decorator factory, cache key from args + sorted kwargs, OrderedDict for LRU, time.monotonic for timestamps, TTL expiration check, threading.Lock for safety, functools.wraps, cache_info() returning NamedTuple, cache_clear() resetting counters, maxsize=0 and ttl=0 disable caching, ValueError for negative values. All 16 acceptance tests pass. Minor concern: the function is called outside the lock (line 91), which means concurrent calls with the same key could both execute the function, leading to a brief race where both try to insert."
+    },
+    "edge_cases": {
+      "score": 8,
+      "justification": "Handles: unhashable args (TypeError via hash(key)), maxsize=0, ttl=0, no-argument functions, None return values, kwargs ordering, cache_clear reset, TTL expiration, LRU eviction. The race condition on concurrent cache misses for the same key is a minor gap - both threads would compute and insert, but correctness is maintained (just a potential duplicate computation)."
+    },
+    "code_quality": {
+      "score": 8,
+      "justification": "Well-structured 129-line implementation. CacheInfo as a NamedTuple is clean. Separate _make_key helper function. Good use of OrderedDict with move_to_end and popitem. Type hints on module-level functions. The lock acquisition pattern (separate lock blocks for read-check and write) is intentional to avoid holding the lock during function execution. Minor: wrapper.cache_info and cache_clear are attached via monkey-patching rather than a wrapper class."
+    },
+    "documentation": {
+      "score": 8,
+      "justification": "Module docstring, function docstrings on ttl_cache, _make_key, cache_info, and cache_clear. CacheInfo NamedTuple has a class docstring. Args, Returns, and Raises documented on the main function and helper. The docstrings explain the LRU + TTL behavior clearly."
+    },
+    "test_coverage": {
+      "score": 9,
+      "justification": "20 tests with excellent breadth: basic hit/miss, cache_info named tuple, cache_clear, TTL expiration (with time.sleep), LRU eviction, LRU access order, maxsize=0, ttl=0, negative maxsize/ttl ValueError, unhashable args, no-arg functions, None return caching, kwargs as cache key, sorted kwargs same key, metadata preservation, thread safety (50 concurrent calls across 10 threads), and the exact spec example. The thread safety test is particularly thorough."
+    },
+    "robustness": {
+      "score": 8,
+      "justification": "Strong: threading.Lock on all cache operations, ValueError for invalid maxsize/ttl at decoration time, TypeError for unhashable args via hash() call, proper handling of disabled-caching modes. The lock is released during function execution to avoid deadlocks with recursive or long-running functions. Minor gap: the race condition on concurrent misses for the same key is acceptable but not ideal."
+    }
+  },
+  "overall": 8.2,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "16/16 passed"
+}

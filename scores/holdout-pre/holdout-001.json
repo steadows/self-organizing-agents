@@ -1,0 +1,34 @@
+{
+  "task_id": "holdout-001",
+  "phase": "holdout-pre",
+  "rules_version": "v0",
+  "scores": {
+    "correctness": {
+      "score": 9,
+      "justification": "All 21/21 acceptance tests pass. Implementation correctly handles all spec requirements: multi-unit parsing, any-order units, case-insensitivity, duplicate detection, and proper ValueError for all invalid inputs. The reconstructed-string validation on line 45 is a clever way to ensure no leftover characters exist."
+    },
+    "edge_cases": {
+      "score": 9,
+      "justification": "All spec edge cases covered: empty string, duplicates, negatives, decimals, spaces, unsupported units, bare digits, unit-only strings. The _VALID_CHARS regex rejects spaces, negative signs, and decimals before tokenization. The reconstruction check catches bare trailing digits (e.g. '2h30')."
+    },
+    "code_quality": {
+      "score": 9,
+      "justification": "Clean, idiomatic Python. Full type hints on function signature and module-level constants. Good use of compiled regex patterns at module level. Clear variable names (seen_units, total_seconds, UNIT_MULTIPLIERS). Function is concise at ~25 lines. Immutable approach with set for tracking seen units."
+    },
+    "documentation": {
+      "score": 8,
+      "justification": "Good module docstring and comprehensive function docstring with Args, Returns, and Raises sections. Could be improved with usage examples in the docstring and a note about the no-normalization behavior (e.g. 90s stays as 90, not 1m30s). Constants lack inline documentation."
+    },
+    "test_coverage": {
+      "score": 8,
+      "justification": "21 tests covering happy path (9 tests: full HMS, individual units, case insensitivity, out-of-order, large values) and error cases (9 tests: empty, duplicate, negative, decimal, spaces, unsupported unit, garbage). Additional edge cases for bare digits and unit-only. Missing: test for very large values, mixed-case duplicates like '2h2H'."
+    },
+    "robustness": {
+      "score": 9,
+      "justification": "Strong input validation pipeline: (1) empty check, (2) valid-chars regex rejects invalid characters early, (3) tokenization, (4) reconstruction check catches partial matches and bare digits, (5) duplicate unit detection. Clear error messages with repr of input. No mutation of inputs."
+    }
+  },
+  "overall": 8.7,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "21/21 passed"
+}

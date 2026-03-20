@@ -21,7 +21,7 @@ import asyncio
 
 import pytest
 
-from holdout_003 import bounded_pool
+from bounded_pool import bounded_pool
 
 
 # --- Happy path ---
@@ -37,7 +37,7 @@ async def test_basic_execution() -> None:
 
     async with bounded_pool(max_workers=4, max_queue=16) as pool:
         for i in range(5):
-            pool.submit(worker, i)
+            await pool.submit(worker, i)
 
     assert sorted(results) == [0, 1, 2, 3, 4]
 
@@ -51,8 +51,8 @@ async def test_kwargs_forwarded() -> None:
         results.append(name)
 
     async with bounded_pool(max_workers=2, max_queue=8) as pool:
-        pool.submit(worker, name="alice")
-        pool.submit(worker, name="bob")
+        await pool.submit(worker, name="alice")
+        await pool.submit(worker, name="bob")
 
     assert sorted(results) == ["alice", "bob"]
 
@@ -74,13 +74,13 @@ async def test_backpressure_blocks_when_queue_full() -> None:
     async def submitter(pool: object) -> None:
         nonlocal submitted_count
         # First submit fills the worker slot
-        pool.submit(slow_worker)
+        await pool.submit(slow_worker)
         submitted_count += 1
         # Wait for the worker to actually start
         await started.wait()
         # These submits should eventually block because queue is full
         for _ in range(2):
-            pool.submit(slow_worker)
+            await pool.submit(slow_worker)
             submitted_count += 1
         # This would block if backpressure works — we set the gate
         # so everything can drain
@@ -111,7 +111,7 @@ async def test_serial_execution_with_one_worker() -> None:
 
     async with bounded_pool(max_workers=1, max_queue=16) as pool:
         for _ in range(5):
-            pool.submit(worker)
+            await pool.submit(worker)
 
     assert max_concurrent == 1
 
@@ -136,7 +136,7 @@ async def test_concurrency_limited_to_max_workers() -> None:
 
     async with bounded_pool(max_workers=3, max_queue=16) as pool:
         for _ in range(9):
-            pool.submit(worker)
+            await pool.submit(worker)
 
     assert max_concurrent <= 3
 
@@ -153,7 +153,7 @@ async def test_error_propagated_on_exit() -> None:
 
     with pytest.raises(RuntimeError, match="task failed"):
         async with bounded_pool(max_workers=2, max_queue=8) as pool:
-            pool.submit(failing)
+            await pool.submit(failing)
 
 
 @pytest.mark.asyncio
@@ -169,9 +169,9 @@ async def test_error_does_not_prevent_other_tasks() -> None:
 
     with pytest.raises(ValueError, match="boom"):
         async with bounded_pool(max_workers=4, max_queue=16) as pool:
-            pool.submit(good_worker, 1)
-            pool.submit(bad_worker)
-            pool.submit(good_worker, 2)
+            await pool.submit(good_worker, 1)
+            await pool.submit(bad_worker)
+            await pool.submit(good_worker, 2)
 
     # At least the good workers that were submitted should have run
     assert 1 in results
@@ -206,7 +206,7 @@ async def test_submit_after_exit_raises() -> None:
         pass  # exit immediately
 
     with pytest.raises(RuntimeError):
-        pool.submit(asyncio.sleep, 0)
+        await pool.submit(asyncio.sleep, 0)
 
 
 # --- Clean exit with no tasks ---

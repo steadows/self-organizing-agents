@@ -1,0 +1,34 @@
+{
+  "task_id": "task-001",
+  "phase": "baseline",
+  "rules_version": "v0",
+  "scores": {
+    "correctness": {
+      "score": 8,
+      "justification": "All spec requirements implemented correctly: NFKD normalization, ASCII encoding, lowercasing, separator collapsing, stripping, and truncation with word-boundary preference. All 20 acceptance tests pass. Minor note: the truncation logic checks slug[max_length] != separator which could index out of bounds if slug length equals max_length+1 at certain boundary conditions, but in practice the len(slug) > max_length guard prevents issues."
+    },
+    "edge_cases": {
+      "score": 8,
+      "justification": "All spec edge cases handled: empty string, special-chars-only, whitespace-only, max_length=0, single word, already-safe input, consecutive separators. Hard truncation when no separator exists within limit is implemented. The max_length <= 0 check handles negative values too, which is a nice touch beyond spec."
+    },
+    "code_quality": {
+      "score": 8,
+      "justification": "Clean, readable implementation at 56 lines. Full type hints on the function signature. Good variable naming (normalized, ascii_text, slug, truncated). Logical flow with clear comments at each step. Uses only stdlib imports as required. The re.sub pattern is idiomatic. Minor: could use re.escape(separator) for custom separators to be safe."
+    },
+    "documentation": {
+      "score": 8,
+      "justification": "Module docstring present. Function has comprehensive docstring with description, Args section with all 3 parameters documented, and Returns section. Inline comments explain each transformation step clearly. No usage examples in the docstring but the code is self-explanatory."
+    },
+    "test_coverage": {
+      "score": 8,
+      "justification": "19 tests covering: basic ASCII, Unicode transliteration, separator stripping, empty string, special chars only, Spanish/German/French Unicode, max_length truncation at word boundary, max_length=0, whitespace-only, single word, already-safe, consecutive separators, hard truncation (no separator), exact fit, custom separator, numeric input. Good breadth. Missing: negative max_length, very large input, separator-only input."
+    },
+    "robustness": {
+      "score": 6,
+      "justification": "No input validation on the text parameter (what if it's not a string?), no validation on separator (empty string separator would cause regex issues), no validation on max_length type. The function would fail with unclear errors on non-string input. The spec doesn't require these checks, but robust code would validate at boundaries."
+    }
+  },
+  "overall": 7.7,
+  "acceptance_test_pass": true,
+  "acceptance_test_details": "20/20 passed"
+}
