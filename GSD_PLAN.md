@@ -406,7 +406,7 @@ Run in a **fresh git worktree** containing only `rules/v2/` + `holdout/` directo
 - [x] **3C.9** Compile all evolved scores → `scores/evolved-scores.json` (per-round, per-task, per-dimension)
 - [x] **3C.10** Compile holdout scores → `scores/holdout-scores.json` (pre vs post, per-task, per-dimension, including acceptance test pass rates)
 - [x] **3C.11** Git checkpoint: `data: evolved round 3 + holdout post scores (final)`
-- [~] **3C.12** **`/steadows-checkpoint`** — snapshot before context reset
+- [x] **3C.12** **`/steadows-checkpoint`** — snapshot before context reset
 
 **→ Reset context before Phase 3D.**
 
@@ -434,8 +434,8 @@ Run in a **fresh git worktree** containing only `rules/v2/` + `holdout/` directo
 - [x] **4.5** Convergence analysis (`analysis/convergence.md`) — do per-round averages improve monotonically? does round 3 plateau vs round 2? which dimensions converge fastest? do any tasks resist improvement across all rounds? do acceptance test pass rates correlate with judge scores?
 - [x] **4.6** Experiment report (`analysis/report.md`) — hypothesis, methodology, results (including holdout), findings, limitations (including: human approval as confound, task complexity ceiling, model-specific results), recommendations for whether to proceed to Experiment 2
 - [x] **4.7** Dev journal entry (`~/dev-journal/2026-03-XX.md`)
-- [ ] **4.8** Final git commit: `docs: experiment analysis and report`
-- [ ] **4.9** **`/steadows-verify`** — Phase 4 quality gate (final). Verify: all analysis files exist, comparison includes per-dimension deltas, holdout analysis explicitly states generalization verdict, drift analysis covers all rule versions with attribution labels, cost tracking sourced from session-logs with per-round breakdown, convergence analysis addresses plateau question, report includes methodology + results + holdout + limitations, all success criteria evaluated, experiment is fully reproducible from git history
+- [x] **4.8** Final git commit: `docs: experiment analysis and report`
+- [x] **4.9** **`/steadows-verify`** — Phase 4 quality gate (final). Verify: all analysis files exist, comparison includes per-dimension deltas, holdout analysis explicitly states generalization verdict, drift analysis covers all rule versions with attribution labels, cost tracking sourced from session-logs with per-round breakdown, convergence analysis addresses plateau question, report includes methodology + results + holdout + limitations, all success criteria evaluated, experiment is fully reproducible from git history
 
 ---
 
@@ -847,6 +847,714 @@ Experiment 4: Emergent Consolidation
 ```
 
 **Each gate is a hard stop.** If an experiment fails to meet its success criteria, do not proceed to the next. Instead, iterate on the failing experiment until it passes or document why the approach doesn't work.
+
+---
+
+---
+---
+
+# Experiment 2: Agent Differentiation (Cell Division)
+
+**Created:** 2026-03-20
+**Status:** DRAFT — Awaiting Pilot Validation
+**Prerequisite:** Experiment 1 complete (SC7 +1.58, SC11 +1.40 — both passed)
+**Budget ceiling:** $300 (split arm) + $150 (control arm) = $450 total
+**Reviewed by:** GPT 5.4 adversarial critique (2026-03-20), revisions incorporated
+
+---
+
+## Overview
+
+Experiment 2 tests whether a governed consolidation loop can **propose structural forks** (specialist rulesets) when score patterns suggest persistent trade-offs — and whether those forks actually improve output quality beyond what continued generic evolution achieves.
+
+The experiment uses a **two-arm design**: a split arm where agents can propose specialization, and a generic-only control arm with the same budget and rounds but no splits allowed. This isolates the specialization effect from the re-execution and continued-evolution effects that Experiment 1 could not cleanly separate.
+
+Starting from Experiment 1's evolved rules (v2) as baseline, the experiment escalates to high-complexity multi-concern tasks that create genuine tension between competing quality dimensions. The hypothesis is that a single generic ruleset cannot optimize all dimensions simultaneously on these tasks, and that agent-proposed specialization will outperform continued generic evolution.
+
+**Core question:** Does governed rule-forking into specialists — proposed by agents under fixed guardrails and human approval — produce better output quality than continued generic rule evolution on complex multi-concern tasks?
+
+**Framing note:** "Cell division" is the motivating biological metaphor. The actual mechanism is governed rule-forking with inheritance, routing, and human approval. The experiment tests **endogenous specialization within a designed concern ontology**, not open-ended emergent self-organization.
+
+---
+
+## Resolved Design Decisions
+
+### DD1: Two-Arm Design with Uniform Evolution Loop
+
+**Decision:** Two parallel arms run on the same tasks for the same number of rounds:
+
+- **Split arm:** Agents can propose rule edits, splits, further splits, or re-merges. Full structural freedom.
+- **Control arm (generic-only):** Agents can propose rule edits only. Splits are forbidden. Same consolidation loop, same budget per round.
+
+Both arms start from the same seed rules (Experiment 1 v2). The delta between arms isolates the specialization effect. Every evolution round in both arms runs the same loop.
+
+**The evolution loop (runs every round):**
+1. **Execute** all tasks with current rules (generic or specialist-routed)
+2. **Judge** all outputs (6 core dimensions + 2 sub-dimensions)
+3. **Detect tension** — compute cross-dimension variance per task
+4. **Consolidate** — critic/defender/synthesizer debate, with tension data injected
+5. **Synthesizer decides** one of:
+   - **(a) Rule edits only** — normal evolution within current structure
+   - **(b) Split proposal** — fork a ruleset into 2+ specialists (if currently generic, or sub-split an existing specialist)
+   - **(c) Re-merge proposal** — collapse a failing specialist back into shared base
+   - **(d) No change** — rules are converged, no action needed
+6. **Human approval** — approves/rejects/modifies the proposal
+7. **Apply** — update rules, router config, specialist directories as needed
+8. **Checkpoint** — git commit, session logs
+
+The system can go from 1 generic ruleset → 2 specialists → 4 specialists → re-merge back to 2 across successive rounds. The trajectory is agent-proposed and human-approved.
+
+**Soft cap of 4 specialists.** The constraint is both outcome-based and task-count-grounded: every split must be justified by score evidence from 3+ tasks, every specialist must demonstrate improvement within 2 rounds or face re-merge, and no specialist can exist without sufficient routing volume (≥3 tasks across 2 rounds). With 8 evolution tasks, going beyond 4 specialists creates routing sparsity that makes evaluation unreliable — the cap is structural, not ideological.
+
+**Why this matters:** The experiment tests whether agents can discover a *useful* number of specialists and self-correct when they overshoot, within the constraint that every specialist must be evaluable.
+
+### DD2: Split Trigger Mechanism
+
+**Decision:** Composite signal — quantitative tension detection + synthesizer judgment, with pre-registered axes and multi-round confirmation.
+
+**Pre-registration:** Before the experiment begins (Phase 0), each task's primary and secondary concern axes are registered. This provides a ground-truth reference for whether observed tensions align with designed tensions or are noise.
+
+After each round, `detect_tension.py` computes:
+- **Cross-dimension score variance** per task (variance of the 6 dimension scores)
+- **Tension signal:** fires if 3+ tasks show variance > 4.0 AND the high/low dimensions align with different pre-registered axes
+- **Cluster analysis:** identifies which dimensions cluster together vs conflict
+- **Repeatability check:** tension must persist across 2 consecutive rounds (not just 1) to qualify as a structural trigger. One-round spikes are classified as noise or underperformance, not trade-offs
+
+This distinguishes:
+- **Broad underperformance** (all dimensions low) — rule edits, not a split
+- **Noisy judging** (one-round spike) — filtered by repeatability check
+- **Repeatable trade-off** (same dimensions conflict across rounds and tasks) — split candidate
+
+When the tension signal fires with multi-round confirmation, the synthesizer receives the dimension heatmap, cluster analysis, and the prompt: "Given this tension data, propose the best action: rule edits, a new split, a further split, or no change. Justify with score evidence."
+
+The synthesizer can propose: initial split, further split, multi-way split, re-merge, or no change.
+
+**Soft cap of 4 specialists** (see DD1). Every split must be justified with score evidence from 3+ tasks. Every specialist must beat the pre-split baseline by >= 0.3 on its targeted dimensions within 2 rounds (with ≥3 routed tasks across last 2 rounds), or face re-merge. Budget pressure and routing sparsity are the natural limits.
+
+**Post-split counterfactual replay (preregistered selection):** After each split event, re-run the 2 tasks with the highest tension scores in the round that triggered the split under the old generic rules. Selection is mechanical (top-2 by tension score), not discretionary. This is cheap (2 extra executions) and provides direct evidence of whether the split itself helped.
+
+### DD3: Task Design — High Complexity with Guaranteed Tension
+
+**Decision:** 8 evolution tasks + 4 holdout tasks. Tasks are substantially harder than Experiment 1 — each produces a multi-file Python package (3-6 files, 300-600 lines) spanning 3+ concern domains with multiple tension axes.
+
+**Why 8+4 instead of 6+3:** More tasks give the agents more signal to detect tension patterns. With only 6 tasks, a 3-way split would leave 2 tasks per specialist — too few for meaningful consolidation. With 8 tasks, even a 4-way split has 2 tasks per specialist minimum.
+
+**Tension design principle:** Each task has a **primary tension** (the dominant trade-off) and **secondary tensions** (weaker cross-cutting concerns). This creates a rich tension landscape where the optimal number of specialists is not obvious — the agents must discover it.
+
+**Concern domains (4 axes):**
+- **I/O resilience** — error recovery, retry logic, streaming, cleanup, defensive file/network operations
+- **Algorithmic precision** — type safety, mathematical correctness, immutability, pure functions, precise generics
+- **API/interface design** — ergonomic interfaces, validation layers, documentation depth, configuration flexibility
+- **Concurrency/safety** — thread safety, race condition prevention, resource lifecycle, deadlock avoidance
+
+Each task spans 2-3 of these axes with a clear primary. A single ruleset optimizing for any one axis will degrade performance on tasks dominated by a different axis.
+
+### DD4: Router Agent Design
+
+**Decision:** LLM classification via Haiku 4.5, evolving alongside specialists.
+
+- Input: Task spec + all current specialist profiles from `router-config.md`
+- Output: `{"specialist": "...", "confidence": 0.85, "rationale": "..."}`
+- Confidence < 0.6 → fallback to shared base (generic execution)
+- Human reviews all router decisions for the first 2 rounds after any split event
+- Router config evolves: when a new specialist is created, its profile is added; when one is merged, its profile is removed
+
+**Multi-specialist routing:** If a task spans concerns covered by 2 specialists, the router picks the **primary** specialist based on the task's dominant tension axis. The router does NOT compose specialists (that's Experiment 3 territory).
+
+**Router evaluation protocol:**
+- **Gold label:** Each task's pre-registered primary axis defines the "correct" specialist. This is set before the experiment runs.
+- **Abstention policy:** Confidence < 0.6 triggers generic fallback. Abstentions count against coverage (not accuracy). Report both: accuracy (of assignments made) and coverage (% of tasks assigned to a specialist).
+- **Primary metric:** Downstream score utility — does routing to the assigned specialist produce higher scores than the generic fallback would? Measured via the post-split counterfactual replay.
+- **Router and specialist quality are measured separately.** Router accuracy is measured against gold labels. Specialist quality is measured by score improvement vs generic. Both must pass independently.
+
+### DD5: Specialist Ruleset Structure
+
+**Decision:** Layered inheritance — shared base + N specialist overlays (no hard cap).
+
+```
+rules/exp2/vN/
+  shared.md                     # Base rules ALL specialists inherit (max 80 lines)
+  output-format.md              # Stays shared (no split)
+  router-config.md              # Specialist profiles + classification prompt
+  specialists/                  # Only exists after first split
+    io-resilience/
+      rules.md                  # I/O-specific rules (max 100 lines)
+    algorithmic/
+      rules.md                  # Algorithm-specific rules (max 100 lines)
+    api-design/                 # Created if/when agents propose a 3rd specialist
+      rules.md
+    concurrency/                # Created if/when agents propose further specialists
+      rules.md
+    # ... additional specialists as agents see fit
+```
+
+**Before any split:** Rules use the Experiment 1 structure (task-executor.md, code-quality.md, output-format.md). At the first split, these are refactored into shared.md + specialist rules.
+
+**Inheritance:** Specialist rules EXTEND the shared base. If a specialist rule conflicts with shared, the specialist wins — but the conflict must be documented with rationale.
+
+**Line limits:** shared.md max 80 lines, each specialist max 100 lines, output-format.md max 30 lines. Total per-specialist context: ~210 lines max.
+
+**Multi-specialist consolidation protocol (exact contract):**
+- **Per round, per specialist:** One full debate (critic/defender/synthesizer) scoped to that specialist's routed tasks and scores. Each debate sees: the specialist's rules, the shared base, the specialist's task outputs + scores, and the tension heatmap. It does NOT see other specialists' rules or outputs.
+- **Shared-base changes:** Any specialist's synthesizer can propose changes to shared.md. Shared-base proposals are collected from all specialist debates, then a **consensus round** runs: a single synthesizer receives all shared-base proposals and resolves conflicts. If two specialists want contradictory shared-base changes, the consensus synthesizer picks one or rejects both.
+- **Debate count per round:** 1 debate per active specialist + 1 consensus debate for shared base = N+1 debates total.
+- **Split/merge proposals:** Only the specialist-scoped synthesizer can propose a further split of its own domain. Only the consensus synthesizer can propose a cross-specialist merge.
+- **All proposals go to human approval.** The human sees the full picture (all specialist debates + consensus) before approving.
+
+### DD6: Re-Merge Criteria
+
+**Decision:** A specialist is a re-merge candidate if it meets ALL of:
+1. Scores do not exceed pre-split baseline by >= 0.3 on targeted dimensions for 2 consecutive rounds
+2. The specialist has been routed at least 3 tasks across the last 2 rounds combined (rolling threshold — avoids noisy decisions from single-round routing variance)
+3. At least 1 counterfactual comparison exists (same task run under generic rules for comparison)
+
+If a specialist has been routed fewer than 3 tasks across 2 rounds, it is automatically a re-merge candidate — insufficient routing volume means the specialist is not earning its structural cost.
+
+Re-merge can also be **proactive**: if the synthesizer observes that two specialists' rules have converged (>80% overlap), it can propose merging them into one.
+
+If ALL specialists fail re-merge criteria: the experiment concludes with a valid negative result.
+
+### DD7: Judge Rubric
+
+**Decision:** Keep Experiment 1's 6 core dimensions as the primary metric. Add 2 sub-dimensions scored separately (NOT in overall score):
+- **Architecture** — module structure, separation of concerns, interface design
+- **Integration coherence** — do components work together, clean inter-module interfaces
+
+Sub-dimensions inform consolidation but don't affect the primary metric, preserving cross-experiment comparability.
+
+**Sub-dimension guardrail:** Architecture and integration_coherence must not regress by more than 1.0 point from baseline in any round. On multi-file systems tasks, structural quality is not a side issue — a specialist that improves code_quality but tanks architecture is not a real improvement. If a round violates this guardrail, the consolidation loop must address it before proceeding.
+
+### DD8: Round Structure — Uniform Evolution Loop (Both Arms)
+
+**Decision:** Both arms run the same structure: 1 baseline round + 5 evolution rounds + 1 holdout round.
+
+| Round | Split Arm | Control Arm |
+|-------|-----------|-------------|
+| R0 | Baseline — 10 tasks, seed rules, judge, tension detect | Same (shared baseline) |
+| R1 | Evolution — edits/split/merge allowed | Evolution — edits only |
+| R2 | Evolution — same | Evolution — edits only |
+| R3 | Evolution — same | Evolution — edits only |
+| R4 | Evolution — same | Evolution — edits only |
+| R5 | Evolution — convergence expected | Evolution — convergence expected |
+| H1 | Holdout — 4 tasks with final rules | Holdout — 4 tasks with final rules |
+
+**Why 5 evolution rounds:**
+- Experiment 1 converged in 2-3 rounds on simple tasks
+- Complex tasks with iterative splitting need more rounds for the full differentiation arc
+- A plausible split-arm trajectory: R1-R2 generic evolution → R3 first split → R4-R5 specialist evolution + convergence
+- 5 rounds keeps the unmitigated budget estimate under the ceiling without relying on aspirational mitigations
+- But the agents might split at R1, or never split — the trajectory is not prescribed
+
+**Early termination:** If agents in either arm propose "no change" for 2 consecutive rounds AND no tension signal fires, that arm's evolution is converged. Skip remaining rounds for that arm.
+
+**Task count:** 10 tasks per round (8 evolution + 2 negative-control tasks that should NOT benefit from splitting — see DD10).
+
+**Execution totals (authoritative):**
+
+| Category | Split Arm | Control Arm | Total |
+|----------|-----------|-------------|-------|
+| Baseline (R0, shared) | 10 tasks | — | 10 |
+| Evolution (R1-R5) | 5 × 10 = 50 | 5 × 10 = 50 | 100 |
+| Post-split counterfactual replays | ~4-6 (est.) | 0 | ~5 |
+| Holdout pre (shared baseline) | 4 tasks | — | 4 |
+| Holdout post | 4 | 4 | 8 |
+| Executor variance calibration (pilot) | 4 | — | 4 |
+| **Total** | **~72** | **~58** | **~131** |
+
+### DD9: Budget (Both Arms)
+
+| Category | Split Arm | Control Arm | Total |
+|----------|-----------|-------------|-------|
+| Executions (Opus, $2-4 each) | ~66 × $3 = $198 | ~56 × $3 = $168 | $366 |
+| Judge calls (Sonnet, 3x then 2x) | ~$18 | ~$15 | $33 |
+| Consolidation (3 agents/round) | 5 × $10 = $50 | 5 × $8 = $40 | $90 |
+| Router (Haiku) | ~$1 | $0 | $1 |
+| **Total estimate** | **~$267** | **~$223** | **~$490** |
+
+This is high. **Budget ceiling: $450 total** with these mitigations:
+- Early termination on convergence (saves 2-3 rounds per arm = $60-120)
+- Reduce judge to 2x median after R2 if inter-run variance is low (saves ~$15)
+- If no tension after R3 in split arm, conclude early (saves ~$80)
+- **Realistic expected spend: $300-400**
+
+**Mandatory budget-cut sequence** (triggered in order if spend exceeds checkpoints):
+1. At $250 spent: Reduce judge to 2x median for remaining rounds (if not already)
+2. At $300 spent: Drop to 1x judge calls for rounds where inter-run variance < 0.5
+3. At $350 spent: Cap remaining rounds at 1 more per arm (finish current + 1)
+4. At $400 spent: Complete current round only, then proceed to holdout evaluation
+
+**Both arms use the same executor model (Opus) throughout.** No model downgrade on either arm — differing models would confound the specialization comparison.
+
+### DD10: Negative-Control Tasks
+
+**Decision:** Add 2 tasks to the evolution set that have **no designed tension** — single-concern tasks where a generic ruleset should perform as well as any specialist. These tasks test whether the system correctly avoids splitting when splitting isn't warranted.
+
+If the agents propose splitting on these tasks, that's a signal of overzealous splitting. If the agents correctly leave these tasks on the generic/shared path, that validates the tension detection mechanism.
+
+These 2 tasks are included in every round for both arms. They are scored normally but flagged in analysis as negative controls.
+
+
+---
+
+## Task Specifications
+
+### Evolution Tasks (8 tasks)
+
+Tasks are organized by primary concern domain but each spans 2-3 domains. This ensures that any single-axis specialist still faces cross-cutting tension, incentivizing further splits or nuanced shared rules.
+
+#### E2-001: ETL Pipeline with Schema Validation and Error Recovery
+**Primary:** I/O resilience | **Secondary:** Algorithmic precision, API design
+Build a multi-source ETL pipeline that: reads from CSV/JSON/TOML files, validates each record against a typed schema (with coercion rules), quarantines invalid records with structured error reports, computes aggregate statistics on valid data, and writes output to multiple formats. Must handle: corrupted files, encoding issues, partial reads, memory-efficient streaming for large files.
+**Files:** `pipeline.py`, `schema.py`, `validators.py`, `writers.py`, `test_pipeline.py`
+**Expected output:** 400-600 lines across 5 files
+
+#### E2-002: HTTP Client with Retry, Circuit Breaker, Cache, and Rate Limiting
+**Primary:** I/O resilience | **Secondary:** Concurrency/safety, API design
+HTTP client wrapper with: exponential backoff + jitter retry, circuit breaker pattern (open/half-open/closed), per-domain TTL cache with stale-while-revalidate, token bucket rate limiter, request/response middleware hooks, structured error taxonomy. `urllib` only. Thread-safe for concurrent use.
+**Files:** `client.py`, `circuit_breaker.py`, `cache.py`, `rate_limiter.py`, `middleware.py`, `test_client.py`
+**Expected output:** 500-600 lines across 6 files
+
+#### E2-003: Expression Evaluator with Type System and Error Reporting
+**Primary:** Algorithmic precision | **Secondary:** API design, I/O resilience
+Build a safe expression evaluator that: parses a mini-language (arithmetic, string ops, comparisons, ternary, variable references), type-checks expressions before evaluation, supports user-defined variables with type declarations, produces source-mapped error messages with line/column info, and handles: nested expressions, operator precedence, type coercion rules, division by zero, undefined variables.
+**Files:** `lexer.py`, `parser.py`, `type_checker.py`, `evaluator.py`, `errors.py`, `test_evaluator.py`
+**Expected output:** 500-600 lines across 6 files
+
+#### E2-004: B-Tree Index with Disk Persistence and Range Queries
+**Primary:** Algorithmic precision | **Secondary:** I/O resilience, Concurrency/safety
+Implement a B-tree index that: supports insert/delete/search/range-query operations, persists to disk with page-based storage, handles concurrent reads (single writer), supports configurable branching factor, provides iterator interface for range scans, and maintains invariants under crash recovery (write-ahead log).
+**Files:** `btree.py`, `page_store.py`, `wal.py`, `iterator.py`, `test_btree.py`
+**Expected output:** 500-600 lines across 5 files
+
+#### E2-005: Plugin System with Dependency Resolution and Lifecycle Management
+**Primary:** API design | **Secondary:** Algorithmic precision, Concurrency/safety
+Build a plugin framework that: discovers plugins from a directory, resolves dependency graphs (with cycle detection), manages plugin lifecycle (init → configure → start → stop → destroy), supports configuration injection via typed schemas, provides a hook/event system for inter-plugin communication, and handles: missing dependencies, version conflicts, startup failures with partial rollback.
+**Files:** `registry.py`, `resolver.py`, `lifecycle.py`, `hooks.py`, `config.py`, `test_plugin_system.py`
+**Expected output:** 500-600 lines across 6 files
+
+#### E2-006: CLI Framework with Subcommands, Config Layers, and Shell Completion
+**Primary:** API design | **Secondary:** I/O resilience, Algorithmic precision
+Build a CLI framework that: supports nested subcommands with help generation, merges config from 4 layers (CLI args > env vars > config file > defaults), generates shell completion scripts (bash/zsh), validates all inputs with typed schemas, provides colored output and progress bars, and handles: unknown arguments gracefully, config file parse errors, terminal capability detection.
+**Files:** `cli.py`, `config_merger.py`, `completion.py`, `output.py`, `test_cli.py`
+**Expected output:** 400-500 lines across 5 files
+
+#### E2-007: Actor-Based Task Scheduler with Supervision and Backpressure
+**Primary:** Concurrency/safety | **Secondary:** I/O resilience, API design
+Build an actor-model task scheduler that: manages a hierarchy of actors (supervisor → workers), routes messages between actors via typed mailboxes, implements supervision strategies (one-for-one, all-for-one restart), supports backpressure (mailbox limits with configurable overflow policy), provides graceful shutdown with drain timeout, and handles: actor crashes, message delivery failures, supervisor cascade failures.
+**Files:** `actor.py`, `mailbox.py`, `supervisor.py`, `scheduler.py`, `test_scheduler.py`
+**Expected output:** 500-600 lines across 5 files
+
+#### E2-008: Distributed Lock Manager with Fencing and Deadlock Detection
+**Primary:** Concurrency/safety | **Secondary:** Algorithmic precision, I/O resilience
+Build an in-process distributed lock manager that: supports exclusive and shared locks, implements fencing tokens for lock safety, detects deadlocks via wait-for graph analysis, supports lock timeouts with automatic release, provides lock upgrade/downgrade (shared → exclusive), and handles: holder crashes (lease expiry), lock contention metrics, priority inversion prevention.
+**Files:** `lock_manager.py`, `fencing.py`, `deadlock_detector.py`, `metrics.py`, `test_lock_manager.py`
+**Expected output:** 400-500 lines across 5 files
+
+### Holdout Tasks (4 tasks)
+
+Holdout tasks span all 4 concern domains. They are never seen during evolution or consolidation.
+
+#### H2-001: Event Sourcing Store with Snapshots and Projections
+**Tensions:** I/O resilience + Algorithmic precision + API design
+Event store with append-only log, snapshot compaction, configurable projections, replay from any point, and concurrent read access.
+
+#### H2-002: Constraint Solver with Backtracking and Explanation
+**Tensions:** Algorithmic precision + API design + Concurrency/safety
+CSP solver with arc consistency, chronological backtracking, conflict-driven learning, solution enumeration, and constraint violation explanations.
+
+#### H2-003: Service Mesh Sidecar with Load Balancing and Health Propagation
+**Tensions:** Concurrency/safety + I/O resilience + API design
+In-process sidecar with round-robin/least-connections/weighted load balancing, health check propagation, circuit breaking per upstream, request hedging, and graceful degradation.
+
+#### H2-004: Schema Registry with Compatibility Checking and Migration Paths
+**Tensions:** API design + Algorithmic precision + I/O resilience
+Schema registry supporting JSON Schema and Avro, backward/forward/full compatibility checking, migration path generation between versions, and persistent storage with caching.
+
+### Negative-Control Tasks (2 tasks — no designed tension)
+
+These tasks are single-concern, high-quality tasks where a generic ruleset should perform well. They test whether the system correctly avoids unnecessary specialization.
+
+#### NC-001: Markdown Table Formatter
+**Concern:** Algorithmic precision only
+Pure function that parses markdown tables, normalizes column widths, aligns content, handles multi-line cells, and outputs formatted markdown. No I/O, no concurrency, no API design complexity. A generic code-quality ruleset should ace this.
+**Files:** `formatter.py`, `test_formatter.py`
+**Expected output:** 150-250 lines across 2 files
+
+#### NC-002: JSON Patch Implementation (RFC 6902)
+**Concern:** Algorithmic precision only
+Implement JSON Patch operations (add, remove, replace, move, copy, test) per RFC 6902. Pure data transformation, well-specified by the RFC, no I/O or concurrency. Should not benefit from specialization.
+**Files:** `json_patch.py`, `test_json_patch.py`
+**Expected output:** 200-300 lines across 2 files
+
+---
+
+## Human Intervention Protocol
+
+Every human approval decision is logged with a classification:
+
+| Type | Definition |
+|------|-----------|
+| **approve-unchanged** | Proposal accepted as-is |
+| **reject** | Proposal rejected entirely |
+| **edit-light** | Minor wording/scoping change, preserves intent |
+| **edit-heavy** | Substantial modification to proposal structure or content |
+
+The analysis phase (Phase 4) will correlate intervention types with score outcomes to separate agent-originated progress from human-shaped progress. If >30% of approvals are edit-heavy, the experiment's "agent-driven" claim is weakened and this must be reported.
+
+---
+
+## New Infrastructure
+
+### New Scripts (TDD)
+1. `scripts/detect_tension.py` — Cross-dimension variance, cluster analysis, tension signal
+2. `scripts/route_task.py` — Haiku-based task-to-specialist classification
+3. `scripts/split_rules.py` — Create/extend specialist directories from split proposal
+4. `scripts/merge_specialist.py` — Re-merge failed specialist into shared base
+
+### Extended Scripts
+5. `scripts/consolidate.py` — Add `--mode adaptive` for agent-driven split/merge/edit decisions + tension heatmap injection
+6. `scripts/apply_rules.py` — Support specialist directory structure (dynamic count)
+7. `scripts/judge.py` — Add `--sub-dimensions` for architecture + integration_coherence
+
+### New Agent Prompts
+8. `consolidation/exp2/tension-detector-prompt.md` — Heatmap + cluster analysis for synthesizer
+9. `consolidation/exp2/adaptive-synthesizer-prompt.md` — Unified prompt for edit/split/merge/no-change decisions
+10. `consolidation/exp2/router-prompt.md` — Task classification to specialist
+11. `consolidation/exp2/specialist-consolidation-prompt.md` — Per-specialist evolution scoped to one domain
+
+---
+
+## Phase 0: Experiment 2 Setup
+
+**Goal:** Directory structure, task specs, acceptance tests, infrastructure extensions, pilot validation.
+**Dependency:** Experiment 1 complete
+
+### Experiment 1 File Reorganization
+
+Move all Experiment 1 artifacts under `exp1/` subdirectories so experiments don't collide. This is a one-time migration before Experiment 2 begins.
+
+**Current → New mapping:**
+```
+rules/v0/, v1/, v2/, current      → rules/exp1/v0/, v1/, v2/, current
+outputs/baseline/, evolved/       → outputs/exp1/baseline/, evolved/
+scores/baseline/, evolved/, holdout-pre/  → scores/exp1/baseline/, evolved/, holdout-pre/
+tasks/acceptance/, task-*.md      → tasks/exp1/acceptance/, task-*.md
+holdout/acceptance/, outputs/, specs/  → holdout/exp1/acceptance/, outputs/, specs/
+consolidation/applied/, approvals/, debates/, proposals/  → consolidation/exp1/applied/, approvals/, debates/, proposals/
+```
+
+- [ ] **0.0pre-a** Create `exp1/` subdirectories under each top-level data dir
+- [ ] **0.0pre-b** Move Experiment 1 artifacts into `exp1/` subdirs (git mv to preserve history)
+- [ ] **0.0pre-c** Update `rules/exp1/current` symlink: `current -> v2`
+- [ ] **0.0pre-d** Update `scripts/judge.py`, `scripts/consolidate.py`, `scripts/apply_rules.py` — any hardcoded paths to old locations
+- [ ] **0.0pre-e** Update `CLAUDE.md` project structure section for new layout
+- [ ] **0.0pre-f** Run existing tests to confirm nothing broke: `pytest tasks/exp1/acceptance/ -v`
+- [ ] **0.0pre-g** Git commit: `chore: reorganize exp1 files under exp1/ subdirectories`
+
+**Post-migration structure:**
+```
+rules/exp1/v0/, v1/, v2/, current    # Experiment 1 rules (frozen)
+rules/exp2/v0/, current              # Experiment 2 rules (active)
+outputs/exp1/baseline/, evolved/     # Experiment 1 outputs (frozen)
+outputs/exp2/baseline/, split/, control/  # Experiment 2 outputs (active)
+scores/exp1/...                      # Experiment 1 scores (frozen)
+scores/exp2/...                      # Experiment 2 scores (active)
+tasks/exp1/...                       # Experiment 1 tasks (frozen)
+tasks/exp2/...                       # Experiment 2 tasks (active)
+holdout/exp1/...                     # Experiment 1 holdout (frozen)
+holdout/exp2/...                     # Experiment 2 holdout (active)
+consolidation/exp1/...               # Experiment 1 consolidation (frozen)
+consolidation/exp2/...               # Experiment 2 consolidation (active)
+```
+
+### Preflight Checklist
+- [ ] **0.0a** Verify git repo operational (branches, worktrees, commits)
+- [ ] **0.0b** Verify session logging captures all invocation types
+- [ ] **0.0c** Verify cost tracking is live and accurate
+- [ ] **0.0d** Verify holdout isolation: `holdout/exp2/` excluded from executor workspace
+- [ ] **0.0e** Verify worktree flow works (create, execute, merge, cleanup)
+- [ ] **0.0f** Verify Experiment 1 reorganization complete (all `exp1/` paths resolve, no stale top-level artifacts)
+
+### Setup
+- [ ] **0.1** Create Experiment 2 directory structure: `tasks/exp2/`, `holdout/exp2/`, `outputs/exp2/`, `scores/exp2/`, `consolidation/exp2/`, `rules/exp2/v0/`, `rules/exp2/current -> v0/`, `holdout/exp2/sealed/` (for sealed pre-scores)
+- [ ] **0.2** Copy Experiment 1's v2 rules from `rules/exp1/v2/` to `rules/exp2/v0/` as seed baseline
+- [ ] **0.3** Write 8 evolution task specs (`tasks/exp2/task-E2-001.md` through `E2-008.md`) with: full requirements, edge cases, expected file structure, **pre-registered primary and secondary concern axes**
+- [ ] **0.4** Write 2 negative-control task specs (`tasks/exp2/task-NC-001.md`, `NC-002.md`) — single-concern, no designed tension
+- [ ] **0.5** Write 4 holdout task specs (`holdout/exp2/specs/holdout-H2-001.md` through `H2-004.md`)
+- [ ] **0.6** `/steadows-tdd` — Tiered test suite for all 14 tasks:
+  - **Acceptance tests** for core behavior (15-25 per task)
+  - **Property tests** for algorithmic invariants (where applicable)
+  - **Stress tests** for concurrency/resilience tasks (thread safety, crash recovery)
+- [ ] **0.7** Write judge rubric addendum (`scores/exp2/judge-rubric-addendum.md`) with sub-dimensions + regression guardrail
+- [ ] **0.8** Extend `scripts/judge.py` with `--sub-dimensions` flag
+
+### Pilot Validation (4 tasks, expanded)
+- [ ] **0.9** **Pilot execution:** Execute E2-001 (I/O), E2-003 (algorithmic), E2-005 (API), E2-007 (concurrency) — one per axis — with seed rules
+- [ ] **0.10** Judge all 4 pilot outputs. Compute cross-dimension variance per task
+- [ ] **0.11** **Executor variance measurement:** Re-execute E2-001 and E2-003 a second time with identical rules. Compare scores across the 2 runs. If executor variance > 1.0 on any dimension, the effect size threshold may need raising
+- [ ] **0.12** **Freeze tension thresholds:** Based on pilot data, confirm or adjust the tension signal threshold (target: variance > 4.0 on 3+ tasks). If pilot variance is < 2.0 across all tasks, redesign tasks before proceeding
+- [ ] **0.13** **Validate difficulty:** If pilot baseline scores are > 9.0 average, tasks are too easy — redesign before proceeding. If scores are < 5.0 average, tasks are too hard — simplify
+
+### Infrastructure
+- [ ] **0.14** `/steadows-tdd` — `scripts/detect_tension.py` (variance + cluster analysis + repeatability check)
+- [ ] **0.15** `/steadows-tdd` — `scripts/route_task.py`
+- [ ] **0.16** `/steadows-tdd` — `scripts/split_rules.py` (create + extend specialist dirs, rollback)
+- [ ] **0.17** `/steadows-tdd` — `scripts/merge_specialist.py`
+- [ ] **0.18** Extend `scripts/consolidate.py` with `--mode adaptive` + `--mode generic-only` (for control arm)
+- [ ] **0.19** Extend `scripts/apply_rules.py` for specialist directory structure (dynamic count)
+- [ ] **0.20** Write all new agent prompts (tension-detector, adaptive-synthesizer, router, specialist-consolidation, consensus)
+- [ ] **0.21** Write Experiment 2 approval rubric (`consolidation/exp2/approval-rubric.md`) — covers rule edits, split proposals, further splits, re-merges, with human intervention type logging
+- [ ] **0.22** Update project `CLAUDE.md` for Experiment 2 structure and isolation
+- [ ] **0.23** `/steadows-verify` — Phase 0 gate
+
+## Phase 1: Baseline (Shared Between Arms)
+
+**Goal:** Execute all 14 tasks (8 evolution + 2 negative-control + 4 holdout) with seed rules. Establish control measurement and initial tension profile. This baseline is shared between both arms.
+**Dependency:** Phase 0 complete
+
+- [ ] **1.1** Execute E2-001 through E2-008 + NC-001, NC-002 with exp2/v0 rules → `outputs/exp2/baseline/`
+- [ ] **1.2** Run acceptance tests against all 10 outputs
+- [ ] **1.3** Judge all 10 outputs (3x median, including sub-dimensions)
+- [ ] **1.4** Run `detect_tension.py` — record baseline tension profile (this is the pre-evolution measurement)
+- [ ] **1.5** Holdout pre-evaluation (isolated worktree): H2-001 through H2-004 with exp2/v0 rules
+- [ ] **1.6** Judge holdout outputs. **Seal holdout pre-scores** into `holdout/exp2/sealed/` — these scores are NOT accessible to the consolidation workflow until the experiment ends. Do not merge holdout worktree artifacts into the main workspace
+- [ ] **1.7** Compile evolution + negative-control scores → `scores/exp2/baseline-scores.json`
+- [ ] **1.8** Git checkpoint: `data: exp2 baseline scores`
+- [ ] **1.9** `/steadows-verify` — Phase 1 gate: all outputs exist, all scores recorded, tension profile documented, holdout pre-scores sealed
+
+## Phase 2: Evolution Loop (5 rounds × 2 arms)
+
+**Goal:** Run both arms in parallel. Split arm: agents can propose rule edits, splits, merges. Control arm: agents can only propose rule edits (no structural changes). Both arms run on the same 10 tasks per round.
+**Dependency:** Phase 1 complete
+
+**Context management:** Each round should start in a **fresh session**. Load context from the latest snapshot in `.context/snapshots/`. **All task execution MUST use subagents (Agent tool)** — never run tasks directly in the main session. This keeps task outputs out of the orchestrating context window. Take a `/steadows-checkpoint` snapshot at the end of each round before context reset. With 2 arms × 10 tasks per round, context will fill fast without this discipline.
+
+### Per-Round Protocol (repeats for R1–R5, each arm independently)
+
+For round N in each arm:
+1. **Execute** — Route (if specialists exist, split arm only) and execute all 10 tasks (8 evolution + 2 negative-control) with current rules → `outputs/exp2/{arm}/round-0N/`
+2. **Test + Judge** — Acceptance tests + judge all 10 outputs (3x median through R2, then 2x median if inter-run variance is low)
+3. **Detect tension** — `detect_tension.py` on round scores
+4. **Consolidate** — Run consolidation loop:
+   - **Split arm:** If specialists exist: per-specialist debate + shared-base consensus (N+1 debates). If generic: standard critic/defender/synthesizer. Tension data injected. Synthesizer can propose: **(a) rule edits, (b) split, (c) further split, (d) re-merge, (e) no change**
+   - **Control arm:** Standard critic/defender/synthesizer. Splits forbidden. Synthesizer can only propose: **(a) rule edits or (e) no change**
+   - **Asymmetry note:** The split arm may run more consolidation debates (N+1 vs 1) once specialists exist. This is inherent to the treatment — specialization includes the cost of coordinating specialists. The budget table accounts for this. Analysis should note this as a confound in the deliberation-time dimension.
+5. **Human approval** — Review and approve/reject/modify. **Log intervention type** (approve-unchanged / reject / edit-light / edit-heavy)
+6. **Apply** — Update rules (and specialist dirs/router config in split arm) → exp2/{arm}/vN
+7. **Post-split counterfactual** (split arm only, when a split occurred this round): Re-execute the 2 tasks with the highest tension scores from the triggering round under the pre-split generic rules. Selection is mechanical (top-2 by tension score), not discretionary. Compare scores to the new specialist execution. Log as counterfactual evidence.
+8. **Checkpoint** — Git commit, session logs, budget check
+
+### Round Tasks (each arm)
+
+#### Round 1
+- [ ] **2.1a** [split] Execute 10 tasks with exp2/split/v0 → `outputs/exp2/split/round-01/`
+- [ ] **2.1b** [control] Execute 10 tasks with exp2/control/v0 → `outputs/exp2/control/round-01/`
+- [ ] **2.2** Tests + judge both arms
+- [ ] **2.3** Tension detection both arms
+- [ ] **2.4** Consolidation: split arm (adaptive) + control arm (generic-only)
+- [ ] **2.5** Human approval (both arms) → apply → v1
+
+#### Round 2
+- [ ] **2.6a/b** Execute both arms with v1 → round-02/
+- [ ] **2.7** Tests + judge + tension + consolidation + approval → v2
+
+#### Round 3
+- [ ] **2.8a/b** Execute both arms with v2 → round-03/
+- [ ] **2.9** Tests + judge + tension + consolidation + approval → v3
+- [ ] **2.9c** **Budget checkpoint:** Trigger mandatory budget-cut sequence per DD9 thresholds
+
+#### Round 4
+- [ ] **2.10a/b** Execute both arms with v3 → round-04/
+- [ ] **2.11** Tests + judge + tension + consolidation + approval → v4
+
+#### Round 5
+- [ ] **2.12a/b** Execute both arms with v4 → round-05/
+- [ ] **2.13** Tests + judge + tension + consolidation + approval → v5
+- [ ] **2.13c** **Budget checkpoint**
+
+**Early termination (per arm):** If agents propose "no change" for 2 consecutive rounds AND no tension signal fires, that arm is converged. Skip remaining rounds for that arm. Early termination is a valid completion state — it does not invalidate the arm's results. The primary comparison (SC-O1) uses each arm's final state regardless of how many rounds it took to reach it.
+
+- [ ] **2.14** `/steadows-verify` — Phase 2 gate (all rounds complete or early termination documented for both arms)
+
+### Differentiation Event Log (split arm)
+
+Track every structural change in `consolidation/exp2/differentiation-log.md`:
+
+```
+| Round | Action | Detail | Specialist Count | Human Intervention |
+|-------|--------|--------|-----------------|-------------------|
+| R1 | rule edits | Updated shared code-quality | 1 (generic) | approve-unchanged |
+| R3 | split | io-resilience + algorithmic | 2 | approve-unchanged |
+| R3 | counterfactual | E2-001, E2-004 re-run under generic | — | — |
+| R4 | further split | api-design from algorithmic | 3 | edit-light |
+| R5 | no change | converged | 3 | approve-unchanged |
+```
+
+This log + the control arm's score trajectory are the primary artifacts for causal attribution.
+
+## Phase 3: Holdout Evaluation (Both Arms)
+
+**Goal:** Test final rules from both arms on unseen holdout tasks. Unseal pre-scores for comparison.
+**Dependency:** Phase 2 complete
+
+- [ ] **3.1** [split arm] Holdout post-evaluation worktree with final split-arm rules
+- [ ] **3.2** Route H2-001–004 via router (if specialists exist) → assign
+- [ ] **3.3** Execute with assigned specialist/generic rules → `outputs/exp2/split/holdout-post/`
+- [ ] **3.4** [control arm] Holdout post-evaluation worktree with final control-arm rules
+- [ ] **3.5** Execute with control-arm generic rules → `outputs/exp2/control/holdout-post/`
+- [ ] **3.6** Acceptance tests + judge all 8 holdout outputs (4 per arm, including sub-dimensions)
+- [ ] **3.7** **Unseal holdout pre-scores** from `holdout/exp2/sealed/` — now compare pre vs post for both arms
+- [ ] **3.8** Compile → `scores/exp2/holdout-scores.json` (both arms + pre)
+- [ ] **3.9** `/steadows-verify` — Phase 3 gate
+
+## Phase 4: Analysis and Report
+
+**Goal:** Comprehensive analysis of agent-driven differentiation.
+**Dependency:** Phase 3 complete
+
+- [ ] **4.1** **Split arm vs control arm comparison** — the primary result. Did the split arm outperform the control arm? By how much? On which dimensions? This isolates the specialization effect from continued-evolution effect
+- [ ] **4.2** Score trajectories: baseline → per-round evolution for both arms → holdout
+- [ ] **4.3** Differentiation analysis: when did splits occur? what triggered them? how many specialists emerged? did the agents self-correct (split then merge)?
+- [ ] **4.4** Counterfactual replay analysis: at each split event, did the specialist rules beat the generic rules on the replayed tasks?
+- [ ] **4.5** Tension resolution: did splits reduce cross-dimension variance on targeted axes?
+- [ ] **4.6** Router accuracy analysis — accuracy vs gold labels, coverage, downstream score utility
+- [ ] **4.7** Negative-control analysis: did agents correctly avoid splitting on NC-001/NC-002?
+- [ ] **4.7b** Holdout oracle-routing sensitivity analysis: re-score holdout tasks using hand-assigned "correct" specialist routing to separate router error from specialist failure
+- [ ] **4.8** Specialist convergence: how did each specialist's rules evolve independently?
+- [ ] **4.9** Holdout generalization: both arms vs sealed pre-scores
+- [ ] **4.10** Human intervention analysis: breakdown by type (approve-unchanged/reject/edit-light/edit-heavy), correlation with score outcomes, % agent-originated vs human-shaped progress
+- [ ] **4.11** Cross-experiment comparison (Exp1 vs Exp2)
+- [ ] **4.12** Cost analysis from session-logs (both arms)
+- [ ] **4.13** Drift analysis (`analysis/exp2/drift-analysis.md`)
+- [ ] **4.14** Convergence analysis (`analysis/exp2/convergence.md`)
+- [ ] **4.15** Final report (`analysis/exp2/report.md`) — hypothesis, methodology (including two-arm design), results (including differentiation trajectory + causal attribution), limitations, Experiment 3 recommendation. Use "governed specialization" framing, not "autonomous emergence"
+- [ ] **4.16** Dev journal entry
+- [ ] **4.17** Git checkpoint: `docs: exp2 analysis complete`
+- [ ] **4.18** `/steadows-verify` — Phase 4 gate (final)
+
+---
+
+## Experiment 2 Success Criteria
+
+### Execution Criteria
+- [ ] **SC-E1:** Both arms complete all rounds with valid scores (or early termination documented per arm)
+- [ ] **SC-E2:** At least 3 evolution rounds completed per arm (early termination after 3+ rounds with documented convergence criteria is valid)
+- [ ] **SC-E3:** Total cost under $450 (both arms combined)
+- [ ] **SC-E4:** All rules git-versioned, within line limits, no sandbox violations
+- [ ] **SC-E5:** All approval decisions (edits + splits + merges) recorded with rationale and intervention type
+- [ ] **SC-E6:** Session metadata logged for every paid invocation (both arms)
+- [ ] **SC-E7:** Differentiation event log complete (split arm)
+- [ ] **SC-E8:** Human intervention breakdown logged for every approval (approve-unchanged / reject / edit-light / edit-heavy)
+
+### Outcome Criteria (Two-Arm Comparison)
+- [ ] **SC-O1:** Split arm final-state mean exceeds control arm final-state mean, where "final state" is each arm's rules at convergence or R5, whichever comes first (specialization beat generic evolution)
+- [ ] **SC-O2:** At least 1 agent-initiated split occurs in the split arm, backed by score evidence from 3+ tasks with multi-round confirmed tension
+- [ ] **SC-O3:** Post-split counterfactual replays show specialist scores > generic scores on replayed tasks
+- [ ] **SC-O4:** No dimension regresses by > 1.0 after any structural change; architecture/integration sub-dimensions do not regress > 1.0 from baseline
+- [ ] **SC-O5:** Router assigns correctly >80% vs gold labels (if specialists exist), with coverage reported separately
+- [ ] **SC-O6:** Every specialist that persists to the final round demonstrates >= 0.3 improvement on its targeted dimensions (no dead-weight specialists)
+- [ ] **SC-O7:** Split arm holdout post > holdout pre by >= 0.3 (generalization)
+- [ ] **SC-O8:** Split arm holdout post >= control arm holdout post (specialist rules generalize better than generic rules)
+- [ ] **SC-O9:** Negative-control tasks (NC-001, NC-002) are never the primary justification for a split proposal — agents correctly avoid specialization when it isn't warranted. Operationally: no split proposal cites NC tasks as evidence, and if NC tasks are routed to a specialist, their scores do not exceed their generic-rules scores by ≥0.3
+- [ ] **SC-O10:** <30% of human approvals are edit-heavy (agent-originated decisions dominate)
+
+### Negative Result Criteria (valid failures)
+- [ ] **SC-N1:** No tension detected after all completed rounds → "Tasks insufficient to trigger differentiation"
+- [ ] **SC-N2:** Tension detected but agents never propose split → "Consolidation loop prefers generic rules at this complexity"
+- [ ] **SC-N3:** Splits occur but split arm does not outperform control arm → "Specialization overhead exceeds benefit; continued generic evolution is sufficient"
+- [ ] **SC-N4:** Specialists don't generalize to holdout → "Specialist rules overfit to evolution task domains"
+- [ ] **SC-N5:** Control arm outperforms split arm → "Structural complexity hurts; simpler is better"
+
+---
+
+## Experiment 2 Risk Assessment
+
+| Risk | Severity | Likelihood | Mitigation |
+|------|----------|------------|------------|
+| Tasks don't create enough tension | High | Medium | Expanded pilot (4 tasks, all axes) before committing. Executor variance measurement on 2 tasks. If pilot variance < 2.0, redesign tasks |
+| Agents never propose a split | Medium | Medium | Tension data explicitly shown to synthesizer; escalation prompt if tension persists 3+ rounds without structural proposal. This is also a valid negative result (SC-N2) |
+| Agents propose too many splits too fast | Medium | Low | Human approval gate on every split; every specialist must prove +0.3 within 2 rounds (min 3 routed tasks) or face re-merge; budget burn rate is the natural brake |
+| Router misclassifies tasks | Medium | Low | Human review for first 2 rounds post-split; 0.6 confidence threshold with generic fallback; router evaluated separately from specialists (gold labels + downstream score utility) |
+| Specialist rules diverge beyond shared base | Medium | Low | Shared base immutable except by consensus across all specialist loops; architecture/integration sub-dimension guardrail (no > 1.0 regression) |
+| Budget overrun from two-arm design | High | Medium | $450 ceiling with early termination on convergence (saves $60-120); reduce judge to 2x after R2; control arm can use Sonnet for execution; budget checkpoints at R3, R5 |
+| Baseline scores near ceiling (tasks too easy) | Medium | Low | Pilot validates difficulty (target 5.0-9.0 baseline); tasks designed at 300-600 lines with multi-file multi-concern structure |
+| Re-merge destroys good specialist rules | Low | Medium | Minimum sample size (3 tasks) + counterfactual comparison before re-merge eligible; human-approved; synthesizer proposes which rules to absorb |
+| Control arm invalidates specialization claim | Medium | Medium | This is the whole point — if control arm wins, that's a valid finding (SC-N5). The two-arm design makes the result honest either way |
+| Human intervention dominates agent decisions | Medium | Medium | Intervention protocol logs every approval type; if >30% edit-heavy, the "agent-driven" claim is weakened and must be reported (SC-O10) |
+| Executor variance exceeds effect size | Medium | Low | Pilot measures executor variance on 2 tasks; if variance > 1.0, raise the +0.3 improvement threshold; post-split counterfactual replays provide direct within-round comparisons |
+
+---
+
+## Experiment 2 Dependency Graph
+
+```
+Phase 0 (Setup)
+  ├── 0.0a-0.0e: Preflight checklist (gate: all pass before proceeding)
+  │
+  ├── 0.1-0.2: Structure + seed rules ─────────────────────────┐
+  ├── 0.3-0.5: Task specs (14 tasks) ─────────────────────────┤
+  ├── 0.6: Tiered test suite (acceptance + property + stress) ─┤
+  ├── 0.7-0.8: Judge rubric + sub-dimensions ─────────────────┤ (parallel)
+  ├── 0.14-0.19: Scripts (detect_tension, route, split, merge) ┤
+  ├── 0.20-0.21: Agent prompts + approval rubric ─────────────┘
+  │                                                    │
+  ├── 0.9-0.11: Pilot validation (4 tasks + executor variance) ← all above
+  ├── 0.12: Freeze tension thresholds ← pilot data
+  ├── 0.13: Validate difficulty ← pilot scores
+  │         (gate: if baseline > 9.0 or < 5.0, redesign)
+  │         (gate: if tension variance < 2.0, redesign)
+  │
+  ├── 0.22: Update CLAUDE.md
+  └── 0.23: /steadows-verify gate
+        │
+Phase 1 (Baseline — shared between arms) ← Phase 0
+  ├── 1.1-1.4: Execute + judge + tension profile (10 tasks) ──┐ (parallel)
+  ├── 1.5-1.6: Holdout pre-eval (sealed, isolated worktree) ──┘
+  └── 1.7-1.9: Compile + checkpoint + verify gate
+        │
+Phase 2 (Evolution — 5 rounds × 2 arms) ← Phase 1
+  │
+  │  ┌────────────────────────────────────────────────────────┐
+  │  │  Per round, per arm:                                   │
+  │  │    Execute 10 tasks → Test + Judge → Detect tension    │
+  │  │    → Consolidate (adaptive or generic-only)            │
+  │  │    → Agent proposes: edit/split/merge/none              │
+  │  │    → Human approval (logged with intervention type)     │
+  │  │    → Apply rules → Post-split counterfactual (if split) │
+  │  │    → Checkpoint + budget check                         │
+  │  │                                                        │
+  │  │  SPLIT ARM: Full structural freedom                    │
+  │  │  CONTROL ARM: Rule edits only, no splits               │
+  │  │                                                        │
+  │  │  Early exit per arm: 2 consecutive "no change"         │
+  │  │  Budget checkpoints: R3, R5                            │
+  │  └────────────────────────────────────────────────────────┘
+  │
+  └── 2.14: /steadows-verify gate (both arms)
+        │
+Phase 3 (Holdout — both arms) ← Phase 2
+  ├── 3.1-3.3: Split arm holdout post (routed if specialists) ─┐ (parallel)
+  ├── 3.4-3.5: Control arm holdout post (generic rules) ───────┘
+  ├── 3.6: Judge all holdout outputs (both arms)
+  ├── 3.7: Unseal holdout pre-scores for comparison
+  └── 3.8-3.9: Compile + verify gate
+        │
+Phase 4 (Analysis) ← Phase 3
+  ├── 4.1: Split arm vs control arm comparison (PRIMARY RESULT)
+  ├── 4.2-4.3: Score trajectories + differentiation analysis ──┐
+  ├── 4.4: Counterfactual replay analysis ─────────────────────┤
+  ├── 4.5: Tension resolution analysis ────────────────────────┤ (parallel)
+  ├── 4.6: Router accuracy analysis ───────────────────────────┤
+  ├── 4.7: Negative-control analysis ──────────────────────────┤
+  ├── 4.8-4.9: Specialist convergence + holdout generalization ┤
+  ├── 4.10: Human intervention analysis ───────────────────────┤
+  ├── 4.11-4.14: Cross-experiment + cost + drift + convergence ┘
+  │                                                    │
+  ├── 4.15: Final report (joins all analyses) ← all above
+  ├── 4.16: Dev journal
+  ├── 4.17: Git checkpoint
+  └── 4.18: /steadows-verify gate (final)
+```
 
 ---
 
